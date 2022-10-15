@@ -11,10 +11,10 @@ from dataclasses import dataclass
 
 class BaseballSchedule:
     # Baseball schedule class
-    schedule = statsapi.schedule()
+    #schedule = statsapi.schedule()
 
     def __init__(self, timezone = "US/Eastern"):
-        self.schedule = BaseballSchedule.schedule
+        self.schedule = statsapi.schedule()
         self.timezone = timezone
     
     def games_today(self):
@@ -55,6 +55,7 @@ class BaseballPitchData:
     pitch_type: list
 
     def __len__(self):
+        # the number of pitches in dataclass
         return len(self.pitch_speed)
 
 

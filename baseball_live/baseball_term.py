@@ -142,7 +142,7 @@ def main(stdscr):
         yfactor = heighty / sz_height
         xfactor = widthx / (17/12) # denominator is plate width in ft
         pXs, pZs = pitches.pX, pitches.pZ
-        # set negative pZs to zero
+        # set negative pZs to zero (ball touched the ground).
         pZs = [0 if i < 0 else i for i in pZs]
         # get relative pZs with respect to the screen
         pZ_rels = [i - sz_bottom for i in pZs]
