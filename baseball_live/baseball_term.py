@@ -7,6 +7,18 @@ from baseball_live import BaseballSchedule
 from baseball_live import BaseballLive
 import textwrap
 
+screen = curses.initscr()
+dims = screen.getmaxyx()
+bs = BaseballSchedule()
+gt = bs.games_today()
+gt_split = gt.splitlines()
+gt_split.append('')
+gt_height = len(gt_split)
+gt_length = len(max(gt_split, key=len))
+
+class TerminalColorException(Exception):
+    """Raised when terminal colour does not support 256"""
+
 def check_256_support():
     curses.setupterm()
     nums = curses.tigetnum('colors')
@@ -30,21 +42,14 @@ def display_games_today(stdscr):
     game_id = box.gather()
     return game_id
 
-screen = curses.initscr()
-dims = screen.getmaxyx()
-bs = BaseballSchedule()
-gt = bs.games_today()
-gt_split = gt.splitlines()
-gt_split.append('')
-gt_height = len(gt_split)
-gt_length = len(max(gt_split, key=len))
-
 # check if terminal supports 256
 if check_256_support() is True:
     curses.start_color()
     curses.use_default_colors()
     for i in range(0, curses.COLORS):
         curses.init_pair(i + 1, i, -1)
+else:
+    raise TerminalColorException("Terminal does not support 256 color")
 
 def pitch_book(pitch_code):
     # Used for displaying the pitch type based on pitch_code
@@ -74,7 +79,6 @@ def pitch_book(pitch_code):
         return curses.color_pair(8)
     else:
         return curses.color_pair(9)
-
 
 def main(stdscr):
     # display games today
