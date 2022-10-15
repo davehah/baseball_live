@@ -5,6 +5,7 @@ from curses.panel import bottom_panel
 from curses.textpad import Textbox, rectangle
 from baseball_live import BaseballSchedule
 from baseball_live import BaseballLive
+import textwrap
 
 def check_256_support():
     curses.setupterm()
@@ -46,6 +47,7 @@ if check_256_support() is True:
         curses.init_pair(i + 1, i, -1)
 
 def pitch_book(pitch_code):
+    # Used for displaying the pitch type based on pitch_code
     if pitch_code == "FF":
         # four seam fastball
         return curses.color_pair(0)
@@ -203,7 +205,17 @@ def main(stdscr):
         if atbat_result is not None:
             resy = int(dims[0] * (6/7))
             resx = int(dims[1]/2) - int(len(atbat_result)/2)
-            stdscr.addstr(resy, resx, atbat_result)
+            # if the string is too long, need to chop it up to display to next
+            if len(atbat_result) > dims[1]:
+                # wrap text 
+                res = textwrap.fill(atbat_result, width = dims[1]-int(dims[1] * (2/8)))
+                atbat_result_list = res.splitlines()
+                resx = int(dims[1]/2) - int(len(atbat_result_list[0])/2)
+                for i, ar in enumerate(atbat_result_list):
+                    stdscr.addstr(resy+i, resx, ar)
+
+            else:
+                stdscr.addstr(resy, resx, atbat_result)
         
         stdscr.refresh()
         
