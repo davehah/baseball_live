@@ -1,5 +1,5 @@
 # baseball_live
-Live MLB at-bats on the terminal
+Live MLB at-bats on the terminal.
 
 ## Dependencies
 [MLB-StatsAPI](https://github.com/toddrob99/MLB-StatsAPI)
@@ -17,5 +17,5 @@ Which returns the baseball schedule for current day (default US-Eastern):
                2  Atlanta Braves       Philadelphia Phillies  16:37
                3  Los Angeles Dodgers  San Diego Padres       20:37
 ```
-Type the ID and hit Enter to display the game:
+Type the ID and hit Enter to display the game (pitcher's view):
 ![alt text](figures/example.png)
