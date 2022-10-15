@@ -4,7 +4,7 @@ Live MLB at-bats on the terminal.
 ## Dependencies
 A terminal with 256 color support  
 [MLB-StatsAPI](https://github.com/toddrob99/MLB-StatsAPI)  
-[tabulate](https://github.com/gregbanks/python-tabulate) 
+[tabulate](https://github.com/gregbanks/python-tabulate)   
 [arrow](https://github.com/arrow-py/arrow)
 
 ## Usage
