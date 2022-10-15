@@ -173,6 +173,19 @@ def main(stdscr):
             stdscr.addstr(legy + i, legx, "X", pitch_book(pitch))
             stdscr.addstr(legy + i, legx + 1, " - " + pitch)
         
+        # plot current inning
+        current_inning = bl.current_inning()
+
+        ix = int(dims[1] * (1/8))
+        iy = int(dims[0] * (1/4))
+        stdscr.addstr(iy, ix, f"I: {current_inning}")
+
+        # plot score
+        aw, hm = bl.current_score()
+        sx = ix
+        sy = iy + 1
+        stdscr.addstr(sy, sx, f"R: {aw}-{hm}")
+        
         # plot pitch count
         current_count = bl.current_count()
         if current_count is not None:
@@ -184,8 +197,8 @@ def main(stdscr):
             balls = 0
             outs = 0
         
-        countx = int(dims[1] * (1/8))
-        county = int(dims[0] * (1/4))
+        countx = sx
+        county = sy + 1
         stdscr.addstr(county, countx, f"{balls}-{strikes} O: {outs}")
 
         # plot expected call
@@ -195,7 +208,7 @@ def main(stdscr):
 
         # plot current call
         ccx = countx
-        ccy = county + 2
+        ccy = ecy + 1
         stdscr.addstr(ccy, ccx, bl.current_call())
 
         # add title

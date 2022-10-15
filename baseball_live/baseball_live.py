@@ -137,8 +137,12 @@ class BaseballLive:
                     pitch_type.append('undefined')
             if pitch['isPitch'] == False:
                 continue
-     
-            pitch_speed.append(pitch['pitchData']['startSpeed'])
+            
+            try:
+                pitch_speed.append(pitch['pitchData']['startSpeed'])
+            except KeyError:
+                # if it fails reading the pitch speed append 'N'
+                pitch_speed.append('N')
             sz_top.append(pitch['pitchData']['strikeZoneTop'])
             sz_bottom.append(pitch['pitchData']['strikeZoneBottom'])
             pX.append(pitch['pitchData']['coordinates']['pX'])
@@ -197,7 +201,17 @@ class BaseballLive:
             return None
         else:
             return atbat['result']['description']
-
+    
+    def current_inning(self):
+        inning = self.game['liveData']['linescore']['currentInning']
+        half = self.game['liveData']['linescore']['inningHalf']
+        return f"{inning} {half}"
+    
+    def current_score(self):
+        box = self.game['liveData']['linescore']['teams']
+        home = box['home']['runs']
+        away = box['away']['runs']
+        return away, home
 
 class BaseballHighlights:
     def __init__(self, gamePk):
