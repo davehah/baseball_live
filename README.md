@@ -1,6 +1,9 @@
 # baseball_live
 Live MLB at-bats on the terminal
 
+## Dependencies
+[MLB-StatsAPI](https://github.com/toddrob99/MLB-StatsAPI)
+
 ## Usage
 Call baseball_term.py on the terminal. 
 ```
