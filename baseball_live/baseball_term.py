@@ -3,8 +3,8 @@ import curses
 from curses import wrapper
 from curses.panel import bottom_panel
 from curses.textpad import Textbox, rectangle
-from baseball_live.baseball_live import BaseballSchedule
-from baseball_live.baseball_live import BaseballLive
+from baseball_live import BaseballSchedule
+from baseball_live import BaseballLive
 
 def check_256_support():
     curses.setupterm()
