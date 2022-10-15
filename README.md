@@ -14,11 +14,14 @@ python3 baseball_live/baseball_term.py
 ```
 Which returns the baseball schedule for current day (default US-Eastern):
 ```
-              ID  Away                 Home                   Time
-            ----  -------------------  ---------------------  ------
-               1  Cleveland Guardians  New York Yankees       13:07
-               2  Atlanta Braves       Philadelphia Phillies  16:37
-               3  Los Angeles Dodgers  San Diego Padres       20:37
+
+                  ID  Away                 Home                   Time
+                ----  -------------------  ---------------------  ------
+                  1  Atlanta Braves       Philadelphia Phillies  14:07
+                  2  Houston Astros       Seattle Mariners       16:07
+                  3  New York Yankees     Cleveland Guardians    19:37
+                  4  Los Angeles Dodgers  San Diego Padres       21:37
+
 ```
 Type the ID and hit Enter to display the game (pitcher's view):
 ![alt text](figures/example.png)
