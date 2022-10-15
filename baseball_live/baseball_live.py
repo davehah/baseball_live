@@ -33,13 +33,16 @@ class BaseballSchedule:
         return gamePk
 
     @staticmethod
-    def is_game_finished(gamePk):
+    def check_game_state(gamePk):
         game = statsapi.get('game', {'gamePk' : gamePk})
         status = game['gameData']['status']
-        if status['abstractGameState'] == 'Final':
-            return True
+        if status['abstractGameState'] == 'Preview':
+            # not started yet
+            return 'Preview'
+        elif status['abstractGameState'] == 'Final':
+            return 'Final'
         else:
-            return False
+            return 'In progress'
 
 @dataclass
 class BaseballPitchData:

@@ -88,8 +88,14 @@ def main(stdscr):
     gamePk = bs.id_to_gamepk(game_id)
     # gamePk = 662063
 
-    # check if game is finished, if True, return highlights
-    game_finished = bs.is_game_finished(gamePk)
+    # check game state and prompt accordingly
+    game_state = bs.check_game_state(gamePk)
+    if game_state == 'Preview':
+        stdscr.erase()
+        stdscr.addstr(0,0,'Game has not started yet!')
+        stdscr.getch()
+        return None
+
 
     while True:
         screen = curses.initscr()
