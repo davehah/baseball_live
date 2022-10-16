@@ -4,10 +4,10 @@ import statsapi
 import arrow
 from tabulate import tabulate
 from dataclasses import dataclass
+from typing import Union, Tuple
 
 class BaseballSchedule:
-    # Baseball schedule class
-    #schedule = statsapi.schedule()
+    """Class for baseball schedule today."""
 
     def __init__(self, timezone = "US/Eastern"):
         self.schedule = statsapi.schedule()
@@ -46,6 +46,7 @@ class BaseballSchedule:
 
 @dataclass
 class BaseballPitchData:
+    """Dataclass to store current at-bat pitch data."""
     pitch_speed: list
     sz_top: list
     sz_bottom: list
@@ -59,15 +60,17 @@ class BaseballPitchData:
 
 
 class BaseballLive:
-    def __init__(self, gamePk):
+    """Class for live baseball data."""
+    def __init__(self, gamePk: int):
         self.gamePk = gamePk
         self.game =  statsapi.get('game', {'gamePk' : self.gamePk})
     
-    def get_current_play(self):
+    def get_current_play(self) -> dict:
         # returns current play GET
         return self.game['liveData']['plays']['currentPlay']
 
-    def current_count(self):
+    @property
+    def count(self) -> Union[dict, None]:
         # returns current count for atbat
         atbat = self.get_current_play()['playEvents']
         if not atbat:
@@ -75,17 +78,20 @@ class BaseballLive:
         else:
             return atbat[-1]['count']
     
-    def current_batter(self):
+    @property
+    def batter(self) -> str:
         # returns current batter 
         batter = self.get_current_play()['matchup']['batter']['fullName']
         return batter
     
-    def current_pitcher(self):
+    @property
+    def pitcher(self) -> str:
         # returns current pitcher
         pitcher = self.get_current_play()['matchup']['pitcher']['fullName']
         return pitcher
     
-    def current_pitch(self):
+    @property
+    def pitch(self) -> Union[dict, None]:
         # returns current pitch metrics
         atbat = self.get_current_play()['playEvents']
         if not atbat:
@@ -95,7 +101,8 @@ class BaseballLive:
         else:
             return None
     
-    def current_call(self):
+    @property
+    def call(self) -> Union[str, None]:
         # returns current pitch call
         atbat = self.get_current_play()['playEvents']
         if not atbat:
@@ -104,9 +111,9 @@ class BaseballLive:
             return atbat[-1]['details']['description']
         else:
             return None
-       
-    def atbat_pitch_data(self):
-        # NEW
+    
+    @property
+    def pitch_data(self) -> Union[BaseballPitchData, None]:
         # returns all pitches in the current atbat:
         atbat = self.get_current_play()['playEvents']
         if not atbat:
@@ -152,7 +159,8 @@ class BaseballLive:
                                 pX, pZ, pitch_type)
         return bpd
     
-    def current_pitch_type(self):
+    @property
+    def pitch_type(self) -> Union[dict, None]:
         # returns current pitch type
         atbat = self.get_current_play()['playEvents']
         if not atbat:
@@ -163,11 +171,13 @@ class BaseballLive:
             else:
                 return None
     
-    def expected_call(self):
+    @property
+    def expected_call(self) -> Union[str, None]:
         # determines expected call from current pitch
+
         # pX is the horizontal coordinate of baseball relative to center (ft)
         # pZ is the vertical coordinate of baseball relative to the ground (ft)
-        pitch = self.current_pitch()
+        pitch = self.pitch
         if pitch is None:
             return None
         pX = pitch['coordinates']['pX']
@@ -195,42 +205,32 @@ class BaseballLive:
         else:
             return "MOE"
     
-    def atbat_result(self):
+    @property
+    def atbat_result(self) -> Union[str, None]:
+        # result of the at-bat
         atbat = self.get_current_play()
         if not 'event' in atbat['result']:
             return None
         else:
             return atbat['result']['description']
     
-    def current_inning(self):
+    @property
+    def inning(self) -> str:
+        # current inning and top or bottom
         inning = self.game['liveData']['linescore']['currentInning']
         half = self.game['liveData']['linescore']['inningHalf']
         return f"{inning} {half}"
     
-    def current_score(self):
+    @property
+    def score(self) -> Tuple[int, int]:
+        # score for (away, home)
         box = self.game['liveData']['linescore']['teams']
         home = box['home']['runs']
         away = box['away']['runs']
         return away, home
 
 class BaseballHighlights:
+    """Class for baseball highlights (finished games)."""
     def __init__(self, gamePk):
         self.gamePk = gamePk
         self.highlights = statsapi.game_highlights(gamePk)
-
-# def main():
-#     bs = BaseballSchedule()
-#     print(bs.games_today())
-#     game_id = bs.input_to_id()
-#     gamePk = bs.id_to_gamepk(game_id)
-#     game_finished = bs.is_game_finished(gamePk)
-#     if game_finished is True:
-#         bh = BaseballHighlights(gamePk)
-#         print(bh.highlights)
-#     else:
-#         bp = BaseballPlot(gamePk)
-#         bp.plot_animation()
-
-
-# if __name__ == "__main__":
-#     main()
