@@ -7,14 +7,23 @@ from dataclasses import dataclass
 from typing import Union, Tuple
 
 class BaseballSchedule:
-    """Class for baseball schedule today."""
+    """Class for baseball schedule today.
+    
+    Attributes:
+        schedule (dict): Schedule returned by statsapi.schedule method.
+        timezone (str): Optional argument to set timezone 
+        (default: "US/Eastern").
+    """
 
     def __init__(self, timezone = "US/Eastern"):
+        """Initialization for BaseballSchedule with optional timezone argument.
+        """
         self.schedule = statsapi.schedule()
         self.timezone = timezone
     
-    def games_today(self):
-        # Displays game available today and runs baseball live from user input
+    def games_today(self) -> str:
+        """Generates a tabulated string of baseball games today.
+        """
         table = [['ID', 'Away', 'Home', 'Time']]
         for i, game in enumerate(self.schedule):
             date = arrow.get(game['game_datetime'])
@@ -24,20 +33,39 @@ class BaseballSchedule:
         
         return tabulate(table, headers = 'firstrow')
     
-    def input_to_id(self):
-        game_id = input("Choose game ID:")
-        return game_id
+    def input_to_id(self) -> str:
+        """A user defined input to choose game ID from games_today.
+        """
+        gameid = input("Choose game ID:")
+        return gameid
     
-    def id_to_gamepk(self, game_id):
+    def id_to_gamepk(self, game_id: str) -> int:
+        """Converts game ID to gamePk.
+
+        Args:
+            game_id (str or int): Game ID relative to games_today.
+        
+        Returns:
+            The gamePk.
+        """
         gamePk = self.schedule[(int(game_id) - 1)]['game_id']
         return gamePk
 
     @staticmethod
-    def check_game_state(gamePk):
+    def check_game_state(gamePk: int) -> str:
+        """Checks the current game state to see if the game has started,
+        in progress, or finished.
+
+        Args:
+            gamePk (int): The gamePk to check the current game state. 
+
+        Returns:
+            'Preview' if game did not start yet, 'In progress' if the game is
+            in progress, or 'Final' if the game finished.
+        """
         game = statsapi.get('game', {'gamePk' : gamePk})
         status = game['gameData']['status']
         if status['abstractGameState'] == 'Preview':
-            # not started yet
             return 'Preview'
         elif status['abstractGameState'] == 'Final':
             return 'Final'
@@ -46,7 +74,20 @@ class BaseballSchedule:
 
 @dataclass
 class BaseballPitchData:
-    """Dataclass to store current at-bat pitch data."""
+    """Dataclass to store current at-bat pitch data.
+    
+    Note:
+        The __len__ retrieves the number of pitches within the dataclass.
+    
+    Attributes:
+        pitch_speed (list): Pitch speeds (mph).
+        sz_top (list): Top of strike zone (ft).
+        sz_bottom (list): Bottom of strike zone (ft).
+        px (list): Horizontal location of pitch 0 is centre of plate (ft).
+        px (list): Vertical location of pitch 0 is ground (ft).
+        pitch_type (list): Pitch type given in two letter pitch code.
+
+    """
     pitch_speed: list
     sz_top: list
     sz_bottom: list
@@ -55,23 +96,32 @@ class BaseballPitchData:
     pitch_type: list
 
     def __len__(self):
-        # the number of pitches in dataclass
         return len(self.pitch_speed)
 
 
 class BaseballLive:
-    """Class for live baseball data."""
+    """Class for live baseball data.
+    
+    Attributes:
+        gamePk (int): The gamePk for live data.
+        game (dict): The returned dictionary from statsapi using gamePk.
+    """
     def __init__(self, gamePk: int):
+        """Initialize BaseballLive with gamePk.
+
+        Args:
+            gamePk (int): The gamePk to initialize BaseballLive.
+        """
         self.gamePk = gamePk
         self.game =  statsapi.get('game', {'gamePk' : self.gamePk})
     
     def get_current_play(self) -> dict:
-        # returns current play GET
+        """Retrieves current play data from BaseballLive.game."""
         return self.game['liveData']['plays']['currentPlay']
 
     @property
     def count(self) -> Union[dict, None]:
-        # returns current count for atbat
+        """Current count for at-bat."""
         atbat = self.get_current_play()['playEvents']
         if not atbat:
             return None
@@ -80,18 +130,19 @@ class BaseballLive:
     
     @property
     def batter(self) -> str:
-        # returns current batter 
+        """The current batter.""" 
         batter = self.get_current_play()['matchup']['batter']['fullName']
         return batter
     
     @property
     def pitcher(self) -> str:
-        # returns current pitcher
+        """The current pitcher.""" 
         pitcher = self.get_current_play()['matchup']['pitcher']['fullName']
         return pitcher
     
     @property
     def pitch(self) -> Union[dict, None]:
+        """Most recent pitch metrics.""" 
         # returns current pitch metrics
         atbat = self.get_current_play()['playEvents']
         if not atbat:
@@ -103,7 +154,7 @@ class BaseballLive:
     
     @property
     def call(self) -> Union[str, None]:
-        # returns current pitch call
+        """Current pitch call."""
         atbat = self.get_current_play()['playEvents']
         if not atbat:
             return None
@@ -114,7 +165,7 @@ class BaseballLive:
     
     @property
     def pitch_data(self) -> Union[BaseballPitchData, None]:
-        # returns all pitches in the current atbat:
+        """Pitch data for current at-bat."""
         atbat = self.get_current_play()['playEvents']
         if not atbat:
             return None
@@ -161,7 +212,7 @@ class BaseballLive:
     
     @property
     def pitch_type(self) -> Union[dict, None]:
-        # returns current pitch type
+        """Current pitch type."""
         atbat = self.get_current_play()['playEvents']
         if not atbat:
             return None
@@ -173,7 +224,9 @@ class BaseballLive:
     
     @property
     def expected_call(self) -> Union[str, None]:
-        # determines expected call from current pitch
+        """Determines the expected call from current pitch irrespective of
+        the umpire's call.
+        """
 
         # pX is the horizontal coordinate of baseball relative to center (ft)
         # pZ is the vertical coordinate of baseball relative to the ground (ft)
@@ -207,7 +260,7 @@ class BaseballLive:
     
     @property
     def atbat_result(self) -> Union[str, None]:
-        # result of the at-bat
+        """The result of the at-bat."""
         atbat = self.get_current_play()
         if not 'event' in atbat['result']:
             return None
@@ -216,21 +269,26 @@ class BaseballLive:
     
     @property
     def inning(self) -> str:
-        # current inning and top or bottom
+        """The current inning."""
         inning = self.game['liveData']['linescore']['currentInning']
         half = self.game['liveData']['linescore']['inningHalf']
         return f"{inning} {half}"
     
     @property
     def score(self) -> Tuple[int, int]:
-        # score for (away, home)
+        """The current score (away-home)."""
         box = self.game['liveData']['linescore']['teams']
         home = box['home']['runs']
         away = box['away']['runs']
         return away, home
 
 class BaseballHighlights:
-    """Class for baseball highlights (finished games)."""
+    """Class for baseball highlights (finished games).
+    
+    Attributes:
+        gamePk (int): The gamePk for highlights.
+        highlights (str): The return value of statsapi.game_highlights method.
+    """
     def __init__(self, gamePk):
         self.gamePk = gamePk
         self.highlights = statsapi.game_highlights(gamePk)
