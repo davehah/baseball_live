@@ -23,5 +23,8 @@ Which returns the baseball schedule for current day (default US-Eastern):
                   4  Los Angeles Dodgers  San Diego Padres       21:37
 
 ```
-Type the ID and hit Enter to display the game (pitcher's view):
+Type the ID and hit Enter to display the game (pitcher's view, updates every 5 seconds):
 ![alt text](figures/example.png)
+Left pannel displays innings, runs (away-home), pitch count, number of outs,
+expected call (irrespective of umpire's call), and pitch result. The right pannel
+displays the legend for pitch types.
