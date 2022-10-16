@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import curses
 from curses import wrapper
-from curses.panel import bottom_panel
 from curses.textpad import Textbox, rectangle
 from baseball_live import BaseballSchedule
 from baseball_live import BaseballLive
@@ -104,7 +103,7 @@ def main(stdscr):
         
         # get game data
         bl = BaseballLive(gamePk)
-        pitches = bl.atbat_pitch_data()
+        pitches = bl.pitch_data
         
         # plot strike zone
         midx = int(dims[1]/2)
@@ -124,7 +123,7 @@ def main(stdscr):
         # if pitch does not exist try again in 5 seconds
         if not pitches:
             try:
-                status = bl.get_current_play()['result']['description']
+                status = bl.atbat_result
                 desy = int(dims[0] * (6/7))
                 desx = int(dims[1]/2) - int(len(status)/2)
                 stdscr.addstr(desy, desx, status)
@@ -162,6 +161,11 @@ def main(stdscr):
         for i, pX in enumerate(pXs):
             plot_y = round(boty - pZ_rels[i] * yfactor)
             plot_x = round(midx + (-1 * pX) * xfactor)
+            # if plot_y is bigger or smaller than screen dimensions, adjust
+            if plot_y+5 >= dims[0]:
+                plot_y = dims[0] - 2
+            # if plot_y-5 <= dims[0]:
+            #     plot_y += 9
             stdscr.addstr(plot_y, plot_x, "X", pitch_book(pitches.pitch_type[i]))
             stdscr.addstr(plot_y+1, plot_x-1, str(round(pitches.pitch_speed[i])))
 
@@ -174,20 +178,20 @@ def main(stdscr):
             stdscr.addstr(legy + i, legx + 1, " - " + pitch)
         
         # plot current inning
-        current_inning = bl.current_inning()
+        current_inning = bl.inning
 
         ix = int(dims[1] * (1/8))
         iy = int(dims[0] * (1/4))
         stdscr.addstr(iy, ix, f"I: {current_inning}")
 
         # plot score
-        aw, hm = bl.current_score()
+        aw, hm = bl.score
         sx = ix
         sy = iy + 1
         stdscr.addstr(sy, sx, f"R: {aw}-{hm}")
         
         # plot pitch count
-        current_count = bl.current_count()
+        current_count = bl.count
         if current_count is not None:
             strikes = current_count['strikes']
             balls = current_count['balls']
@@ -204,16 +208,16 @@ def main(stdscr):
         # plot expected call
         ecx = countx
         ecy = county + 1
-        stdscr.addstr(ecy, ecx, f"EC: {bl.expected_call()}")
+        stdscr.addstr(ecy, ecx, f"EC: {bl.expected_call}")
 
         # plot current call
         ccx = countx
         ccy = ecy + 1
-        stdscr.addstr(ccy, ccx, bl.current_call())
+        stdscr.addstr(ccy, ccx, bl.call)
 
         # add title
-        pitcher = bl.current_pitcher()
-        batter = bl.current_batter()
+        pitcher = bl.pitcher
+        batter = bl.batter
         titlepitcher = f"Pitcher: {pitcher}"
         titlebatter = f"Batter: {batter}"
         titleypitcher = int(dims[0]/7)
@@ -224,7 +228,7 @@ def main(stdscr):
         stdscr.addstr(titleybatter, titlexbatter, titlebatter)
 
         # add result if exists
-        atbat_result = bl.atbat_result()
+        atbat_result = bl.atbat_result
         if atbat_result is not None:
             resy = int(dims[0] * (6/7))
             resx = int(dims[1]/2) - int(len(atbat_result)/2)
