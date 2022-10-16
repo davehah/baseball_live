@@ -18,7 +18,7 @@ class BaseballPlot:
             # TODO plot live data
             bl = BaseballLive(gamePk)
             #pitches = bl.atbat_pitch_data()
-            pitches = bl.atbat_pitch_data()
+            pitches = bl.pitch_data
             if not pitches:
                 return None
             
@@ -50,8 +50,8 @@ class BaseballPlot:
                 pitch_speed = pitches.pitch_speed[p]
                 plt.annotate(pitch_speed, ((-1 * pX), pZ))
             
-            pitcher = bl.current_pitcher()
-            batter = bl.current_batter()
+            pitcher = bl.pitcher
+            batter = bl.batter
             
             plt.gca().add_patch(rect)
             plt.xlim([-2,2])
@@ -68,7 +68,7 @@ class BaseballPlot:
             # plot current count
             plot_height = 0.95
             bl = BaseballLive(self.gamePk)
-            current_count = bl.current_count()
+            current_count = bl.count
             if current_count is not None:
                 strikes = current_count['strikes']
                 balls = current_count['balls']
@@ -83,12 +83,12 @@ class BaseballPlot:
 
             # plot expected call
             plt.text(0, (plot_height-0.03),
-                     f'Expected call: {bl.expected_call()}', 
+                     f'Expected call: {bl.expected_call}', 
                      transform=ax.transAxes)
            
             # plot the atbat result if found
             nonlocal pitch_count
-            atbat_result = bl.atbat_result()
+            atbat_result = bl.atbat_result
             if atbat_result is not None:
                 plt.text(0, 0,
                          atbat_result, 
