@@ -10,7 +10,7 @@ A terminal with 256 color support
 ## Usage
 Call baseball_term.py on the terminal. 
 ```
-python3 baseball_live/baseball_term.py
+python3 -m baseball_live.baseball_term.py
 ```
 Which returns the baseball schedule for current day (default US-Eastern):
 ```
