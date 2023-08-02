@@ -101,28 +101,27 @@ class BaseballPitchData:
 
 class BaseballLive:
     """Class for live baseball data.
+
+    Args:
+        gamePk (int): The gamePk for live data.
     
     Attributes:
-        gamePk (int): The gamePk for live data.
         game (dict): The returned dictionary from statsapi using gamePk.
     """
     def __init__(self, gamePk: int):
-        """Initialize BaseballLive with gamePk.
-
-        Args:
-            gamePk (int): The gamePk to initialize BaseballLive.
-        """
+        """Initialize BaseballLive with gamePk."""
         self.gamePk = gamePk
         self.game =  statsapi.get('game', {'gamePk' : self.gamePk})
     
-    def get_current_play(self) -> dict:
+    @property
+    def current_play(self) -> dict:
         """Retrieves current play data from BaseballLive.game."""
         return self.game['liveData']['plays']['currentPlay']
-
+    
     @property
     def count(self) -> Union[dict, None]:
         """Current count for at-bat."""
-        atbat = self.get_current_play()['playEvents']
+        atbat = self.current_play['playEvents']
         if not atbat:
             return None
         else:
@@ -131,20 +130,20 @@ class BaseballLive:
     @property
     def batter(self) -> str:
         """The current batter.""" 
-        batter = self.get_current_play()['matchup']['batter']['fullName']
+        batter = self.current_play['matchup']['batter']['fullName']
         return batter
     
     @property
     def pitcher(self) -> str:
         """The current pitcher.""" 
-        pitcher = self.get_current_play()['matchup']['pitcher']['fullName']
+        pitcher = self.current_play['matchup']['pitcher']['fullName']
         return pitcher
     
     @property
     def pitch(self) -> Union[dict, None]:
         """Most recent pitch metrics.""" 
         # returns current pitch metrics
-        atbat = self.get_current_play()['playEvents']
+        atbat = self.current_play['playEvents']
         if not atbat:
             return None
         elif 'pitchData' in atbat[-1]:
@@ -155,7 +154,7 @@ class BaseballLive:
     @property
     def call(self) -> Union[str, None]:
         """Current pitch call."""
-        atbat = self.get_current_play()['playEvents']
+        atbat = self.current_play['playEvents']
         if not atbat:
             return None
         elif 'details' in atbat[-1]: 
@@ -166,7 +165,7 @@ class BaseballLive:
     @property
     def pitch_data(self) -> Union[BaseballPitchData, None]:
         """Pitch data for current at-bat."""
-        atbat = self.get_current_play()['playEvents']
+        atbat = self.current_play['playEvents']
         if not atbat:
             return None
         
@@ -188,19 +187,17 @@ class BaseballLive:
         for pitch in atbat:
             # append pitch type to pitchData
             if 'pitchData' in pitch:
-                # pitch['pitchData']['type'] = pitch['details']['type']
                 try:
                     pitch_type.append(pitch['details']['type']['code'])
-                except:
-                    pitch_type.append('undefined')
+                except KeyError:
+                    continue
             if pitch['isPitch'] == False:
                 continue
             
             try:
                 pitch_speed.append(pitch['pitchData']['startSpeed'])
             except KeyError:
-                # if it fails reading the pitch speed append 'N'
-                pitch_speed.append('N')
+                continue
             sz_top.append(pitch['pitchData']['strikeZoneTop'])
             sz_bottom.append(pitch['pitchData']['strikeZoneBottom'])
             pX.append(pitch['pitchData']['coordinates']['pX'])
@@ -213,7 +210,7 @@ class BaseballLive:
     @property
     def pitch_type(self) -> Union[dict, None]:
         """Current pitch type."""
-        atbat = self.get_current_play()['playEvents']
+        atbat = self.current_play['playEvents']
         if not atbat:
             return None
         elif 'details' in atbat[-1]:
@@ -261,7 +258,7 @@ class BaseballLive:
     @property
     def atbat_result(self) -> Union[str, None]:
         """The result of the at-bat."""
-        atbat = self.get_current_play()
+        atbat = self.current_play
         if not 'event' in atbat['result']:
             return None
         else:

@@ -2,8 +2,8 @@
 import curses
 from curses import wrapper
 from curses.textpad import Textbox, rectangle
-from baseball_live import BaseballSchedule
-from baseball_live import BaseballLive
+from .baseball_live import BaseballSchedule
+from .baseball_live import BaseballLive
 import textwrap
 
 screen = curses.initscr()
@@ -26,7 +26,7 @@ def check_256_support():
     else:
         return False
 
-def display_games_today(stdscr):
+def display_games_today(stdscr: 'curses._CursesWindow'):
     stdscr.erase()
     for i, j in enumerate(gt_split):
         ht = int(dims[0]/2) - int(gt_height/2) + i
@@ -79,13 +79,13 @@ def pitch_book(pitch_code):
     else:
         return curses.color_pair(9)
 
-def main(stdscr):
+
+def main(stdscr: 'curses._CursesWindow'):
     # display games today
     game_id = display_games_today(stdscr)
     
     # convert gameid to gamePk and and get data
     gamePk = bs.id_to_gamepk(game_id)
-    # gamePk = 662063
 
     # check game state and prompt accordingly
     game_state = bs.check_game_state(gamePk)
@@ -108,8 +108,6 @@ def main(stdscr):
         # plot strike zone
         midx = int(dims[1]/2)
         midy = int(dims[0]/2)
-        # widthx = 18
-        # heighty = 12
         widthx = int(dims[1]/6)
         heighty = round(widthx/1.5)
         ulx, uly = midx - int(widthx/2), midy - int(heighty/2)
@@ -128,7 +126,7 @@ def main(stdscr):
                 desx = int(dims[1]/2) - int(len(status)/2)
                 stdscr.addstr(desy, desx, status)
                 stdscr.refresh()
-            except KeyError:
+            except (KeyError, TypeError):
                 pass
 
             try:
@@ -164,8 +162,7 @@ def main(stdscr):
             # if plot_y is bigger or smaller than screen dimensions, adjust
             if plot_y+5 >= dims[0]:
                 plot_y = dims[0] - 2
-            # if plot_y-5 <= dims[0]:
-            #     plot_y += 9
+
             stdscr.addstr(plot_y, plot_x, "X", pitch_book(pitches.pitch_type[i]))
             stdscr.addstr(plot_y+1, plot_x-1, str(round(pitches.pitch_speed[i])))
 
