@@ -189,19 +189,20 @@ class BaseballLive:
             if 'pitchData' in pitch:
                 try:
                     pitch_type.append(pitch['details']['type']['code'])
+                    pitch_data = pitch['pitchData']
                 except KeyError:
                     continue
             if pitch['isPitch'] == False:
                 continue
             
             try:
-                pitch_speed.append(pitch['pitchData']['startSpeed'])
+                pitch_speed.append(pitch_data['startSpeed'])
             except KeyError:
                 continue
-            sz_top.append(pitch['pitchData']['strikeZoneTop'])
-            sz_bottom.append(pitch['pitchData']['strikeZoneBottom'])
-            pX.append(pitch['pitchData']['coordinates']['pX'])
-            pZ.append(pitch['pitchData']['coordinates']['pZ'])
+            sz_top.append(pitch_data['strikeZoneTop'])
+            sz_bottom.append(pitch_data['strikeZoneBottom'])
+            pX.append(pitch_data['coordinates']['pX'])
+            pZ.append(pitch_data['coordinates']['pZ'])
   
         bpd = BaseballPitchData(pitch_speed, sz_top, sz_bottom, 
                                 pX, pZ, pitch_type)
