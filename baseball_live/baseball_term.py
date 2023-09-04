@@ -5,6 +5,7 @@ from curses.textpad import Textbox, rectangle
 from .baseball_live import BaseballSchedule
 from .baseball_live import BaseballLive
 import textwrap
+import time
 
 screen = curses.initscr()
 dims = screen.getmaxyx()
@@ -242,6 +243,9 @@ def main(stdscr: 'curses._CursesWindow'):
                 stdscr.addstr(resy, resx, atbat_result)
         
         stdscr.refresh()
+
+        # sleep for 10 seconds (to try to sync with livestream)
+        time.sleep(10)
         
         # refresh every 5 seconds
         try:
