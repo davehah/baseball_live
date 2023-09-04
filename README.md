@@ -1,5 +1,6 @@
 # baseball_live
-Live MLB at-bats on the terminal using [Python curses](https://docs.python.org/3/library/curses.html).
+Retrieves data using [MLB-StatsAPI](https://github.com/toddrob99/MLB-StatsAPI) to visualize live MLB at-bats 
+on the terminal using [Python curses](https://docs.python.org/3/library/curses.html).
 
 ## Installation
 Clone the library and install:
