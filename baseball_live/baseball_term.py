@@ -18,6 +18,15 @@ def check_256_support():
         return True
     else:
         return False
+    
+# check if terminal supports 256
+if check_256_support():
+    curses.start_color()
+    curses.use_default_colors()
+    for i in range(0, curses.COLORS):
+        curses.init_pair(i + 1, i, -1)
+else:
+    raise TerminalColorException("Terminal does not support 256 color")
 
 
 def display_games_today(stdscr: "curses._CursesWindow", gt: str, dims: tuple):
@@ -40,14 +49,7 @@ def display_games_today(stdscr: "curses._CursesWindow", gt: str, dims: tuple):
     return game_id
 
 
-# check if terminal supports 256
-if check_256_support() is True:
-    curses.start_color()
-    curses.use_default_colors()
-    for i in range(0, curses.COLORS):
-        curses.init_pair(i + 1, i, -1)
-else:
-    raise TerminalColorException("Terminal does not support 256 color")
+
 
 
 def pitch_book(pitch_code: str):
