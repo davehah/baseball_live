@@ -12,26 +12,29 @@ dims = screen.getmaxyx()
 bs = BaseballSchedule()
 gt = bs.games_today()
 gt_split = gt.splitlines()
-gt_split.append('')
+gt_split.append("")
 gt_height = len(gt_split)
 gt_length = len(max(gt_split, key=len))
+
 
 class TerminalColorException(Exception):
     """Raised when terminal colour does not support 256"""
 
+
 def check_256_support():
     curses.setupterm()
-    nums = curses.tigetnum('colors')
+    nums = curses.tigetnum("colors")
     if nums >= 256:
         return True
     else:
         return False
 
-def display_games_today(stdscr: 'curses._CursesWindow'):
+
+def display_games_today(stdscr: "curses._CursesWindow"):
     stdscr.erase()
     for i, j in enumerate(gt_split):
-        ht = int(dims[0]/2) - int(gt_height/2) + i
-        ln = int(dims[1]/2) - int(gt_length/2)
+        ht = int(dims[0] / 2) - int(gt_height / 2) + i
+        ln = int(dims[1] / 2) - int(gt_length / 2)
         stdscr.addstr(ht, ln, j)
 
     # get user input on game id
@@ -42,6 +45,7 @@ def display_games_today(stdscr: 'curses._CursesWindow'):
     game_id = box.gather()
     return game_id
 
+
 # check if terminal supports 256
 if check_256_support() is True:
     curses.start_color()
@@ -50,6 +54,7 @@ if check_256_support() is True:
         curses.init_pair(i + 1, i, -1)
 else:
     raise TerminalColorException("Terminal does not support 256 color")
+
 
 def pitch_book(pitch_code):
     # Used for displaying the pitch type based on pitch_code
@@ -81,38 +86,37 @@ def pitch_book(pitch_code):
         return curses.color_pair(9)
 
 
-def main(stdscr: 'curses._CursesWindow'):
+def main(stdscr: "curses._CursesWindow"):
     # display games today
     game_id = display_games_today(stdscr)
-    
+
     # convert gameid to gamePk and and get data
     gamePk = bs.id_to_gamepk(game_id)
 
     # check game state and prompt accordingly
     game_state = bs.check_game_state(gamePk)
-    if game_state == 'Preview':
+    if game_state == "Preview":
         stdscr.erase()
-        stdscr.addstr(0,0,'Game has not started yet!')
+        stdscr.addstr(0, 0, "Game has not started yet!")
         stdscr.getch()
         return None
-
 
     while True:
         screen = curses.initscr()
         dims = screen.getmaxyx()
         stdscr.erase()
-        
+
         # get game data
         bl = BaseballLive(gamePk)
         pitches = bl.pitch_data
-        
+
         # plot strike zone
-        midx = int(dims[1]/2)
-        midy = int(dims[0]/2)
-        widthx = int(dims[1]/6)
-        heighty = round(widthx/1.5)
-        ulx, uly = midx - int(widthx/2), midy - int(heighty/2)
-        lrx, lry = midx + int(widthx/2), midy + int(heighty/2)
+        midx = int(dims[1] / 2)
+        midy = int(dims[0] / 2)
+        widthx = int(dims[1] / 6)
+        heighty = round(widthx / 1.5)
+        ulx, uly = midx - int(widthx / 2), midy - int(heighty / 2)
+        lrx, lry = midx + int(widthx / 2), midy + int(heighty / 2)
         rectangle(stdscr, uly, ulx, lry, lrx)
         stdscr.refresh()
 
@@ -123,8 +127,8 @@ def main(stdscr: 'curses._CursesWindow'):
         if not pitches:
             try:
                 status = bl.atbat_result
-                desy = int(dims[0] * (6/7))
-                desx = int(dims[1]/2) - int(len(status)/2)
+                desy = int(dims[0] * (6 / 7))
+                desx = int(dims[1] / 2) - int(len(status) / 2)
                 stdscr.addstr(desy, desx, status)
                 stdscr.refresh()
             except (KeyError, TypeError):
@@ -136,8 +140,8 @@ def main(stdscr: 'curses._CursesWindow'):
                 continue
             except KeyboardInterrupt:
                 break
-        
-        # get top and bottom strike zone 
+
+        # get top and bottom strike zone
         sz_top = pitches.sz_top[0]
         sz_bottom = pitches.sz_bottom[0]
         sz_height = sz_top - sz_bottom
@@ -150,7 +154,7 @@ def main(stdscr: 'curses._CursesWindow'):
         boty = midy + heighty / 2
         sz_height = sz_top - sz_bottom
         yfactor = heighty / sz_height
-        xfactor = widthx / (17/12) # denominator is plate width in ft
+        xfactor = widthx / (17 / 12)  # denominator is plate width in ft
         pXs, pZs = pitches.pX, pitches.pZ
         # set negative pZs to zero (ball touched the ground).
         pZs = [0 if i < 0 else i for i in pZs]
@@ -161,25 +165,25 @@ def main(stdscr: 'curses._CursesWindow'):
             plot_y = round(boty - pZ_rels[i] * yfactor)
             plot_x = round(midx + (-1 * pX) * xfactor)
             # if plot_y is bigger or smaller than screen dimensions, adjust
-            if plot_y+5 >= dims[0]:
+            if plot_y + 5 >= dims[0]:
                 plot_y = dims[0] - 2
 
             stdscr.addstr(plot_y, plot_x, "X", pitch_book(pitches.pitch_type[i]))
-            stdscr.addstr(plot_y+1, plot_x-1, str(round(pitches.pitch_speed[i])))
+            stdscr.addstr(plot_y + 1, plot_x - 1, str(round(pitches.pitch_speed[i])))
 
         # plot pitch legend
         pitch_type_set = list(set(pitches.pitch_type))
-        legx = int(dims[1] * (5/6))
-        legy = int(dims[0] * (1/4))
+        legx = int(dims[1] * (5 / 6))
+        legy = int(dims[0] * (1 / 4))
         for i, pitch in enumerate(pitch_type_set):
             stdscr.addstr(legy + i, legx, "X", pitch_book(pitch))
             stdscr.addstr(legy + i, legx + 1, " - " + pitch)
-        
+
         # plot current inning
         current_inning = bl.inning
 
-        ix = int(dims[1] * (1/8))
-        iy = int(dims[0] * (1/4))
+        ix = int(dims[1] * (1 / 8))
+        iy = int(dims[0] * (1 / 4))
         stdscr.addstr(iy, ix, f"I: {current_inning}")
 
         # plot score
@@ -187,18 +191,18 @@ def main(stdscr: 'curses._CursesWindow'):
         sx = ix
         sy = iy + 1
         stdscr.addstr(sy, sx, f"R: {aw}-{hm}")
-        
+
         # plot pitch count
         current_count = bl.count
         if current_count is not None:
-            strikes = current_count['strikes']
-            balls = current_count['balls']
-            outs = current_count['outs']
+            strikes = current_count["strikes"]
+            balls = current_count["balls"]
+            outs = current_count["outs"]
         else:
             strikes = 0
             balls = 0
             outs = 0
-        
+
         countx = sx
         county = sy + 1
         stdscr.addstr(county, countx, f"{balls}-{strikes} O: {outs}")
@@ -218,30 +222,32 @@ def main(stdscr: 'curses._CursesWindow'):
         batter = bl.batter
         titlepitcher = f"Pitcher: {pitcher}"
         titlebatter = f"Batter: {batter}"
-        titleypitcher = int(dims[0]/7)
-        titlexpitcher = int(dims[1]/2) - int(len(titlepitcher)/2)
+        titleypitcher = int(dims[0] / 7)
+        titlexpitcher = int(dims[1] / 2) - int(len(titlepitcher) / 2)
         titleybatter = titleypitcher + 1
-        titlexbatter = int(dims[1]/2) - int(len(titlebatter)/2)
+        titlexbatter = int(dims[1] / 2) - int(len(titlebatter) / 2)
         stdscr.addstr(titleypitcher, titlexpitcher, titlepitcher)
         stdscr.addstr(titleybatter, titlexbatter, titlebatter)
 
         # add result if exists
         atbat_result = bl.atbat_result
         if atbat_result is not None:
-            resy = int(dims[0] * (6/7))
-            resx = int(dims[1]/2) - int(len(atbat_result)/2)
+            resy = int(dims[0] * (6 / 7))
+            resx = int(dims[1] / 2) - int(len(atbat_result) / 2)
             # if the string is too long, need to chop it up to display to next
             if len(atbat_result) > dims[1]:
-                # wrap text 
-                res = textwrap.fill(atbat_result, width = dims[1]-int(dims[1] * (2/8)))
+                # wrap text
+                res = textwrap.fill(
+                    atbat_result, width=dims[1] - int(dims[1] * (2 / 8))
+                )
                 atbat_result_list = res.splitlines()
-                resx = int(dims[1]/2) - int(len(atbat_result_list[0])/2)
+                resx = int(dims[1] / 2) - int(len(atbat_result_list[0]) / 2)
                 for i, ar in enumerate(atbat_result_list):
-                    stdscr.addstr(resy+i, resx, ar)
+                    stdscr.addstr(resy + i, resx, ar)
 
             else:
                 stdscr.addstr(resy, resx, atbat_result)
-        
+
         stdscr.refresh()
 
         # refresh every 5 seconds
@@ -250,5 +256,6 @@ def main(stdscr: 'curses._CursesWindow'):
                 curses.napms(100)
         except KeyboardInterrupt:
             break
+
 
 wrapper(main)

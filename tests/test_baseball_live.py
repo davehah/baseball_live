@@ -1,6 +1,7 @@
 from baseball_live.baseball_live import BaseballLive
 import unittest
 
+
 class TestBaseballLive(unittest.TestCase):
     def setUp(self):
         self.game = BaseballLive(565542)
@@ -25,13 +26,13 @@ class TestBaseballLive(unittest.TestCase):
 
     def test_score(self):
         self.assertIsInstance(self.game.score, tuple)
-    
+
     def test_inning(self):
         self.assertIsInstance(self.game.inning, str)
-    
+
     def test_atbat_result(self):
         self.assertIsInstance(self.game.atbat_result, str)
-   
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
