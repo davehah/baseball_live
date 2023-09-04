@@ -52,33 +52,20 @@ def display_games_today(stdscr: "curses._CursesWindow", gt: str, dims: tuple):
 
 
 def pitch_book(pitch_code: str):
-    # Used for displaying the pitch type based on pitch_code
-    if pitch_code == "FF":
-        # four seam fastball
-        return curses.color_pair(0)
-    elif pitch_code == "SL":
-        # slider
-        return curses.color_pair(2)
-    elif pitch_code == "CU":
-        # curve ball
-        return curses.color_pair(3)
-    elif pitch_code == "CH":
-        # changeup
-        return curses.color_pair(4)
-    elif pitch_code == "FS":
-        # splitter
-        return curses.color_pair(5)
-    elif pitch_code == "FC":
-        # cutter
-        return curses.color_pair(6)
-    elif pitch_code == "SI":
-        # sinker
-        return curses.color_pair(7)
-    elif pitch_code == "FT":
-        # two seam fastball
-        return curses.color_pair(8)
-    else:
-        return curses.color_pair(9)
+    # Define a dictionary to map pitch codes to color pairs
+    pitch_color_mapping = {
+        "FF": 0,  # four seam fastball
+        "SL": 2,  # slider
+        "CU": 3,  # curve ball
+        "CH": 4,  # changeup
+        "FS": 5,  # splitter
+        "FC": 6,  # cutter
+        "SI": 7,  # sinker
+        "FT": 8,  # two seam fastball
+    }
+
+    # Use a default color pair (9) if pitch_code is not found in the mapping
+    return curses.color_pair(pitch_color_mapping.get(pitch_code, 9))
 
 
 def live(stdscr: "curses._CursesWindow"):
