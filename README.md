@@ -1,5 +1,5 @@
 # baseball_live
-Live MLB at-bats on the terminal using Python curses.
+Live MLB at-bats on the terminal using [Python curses](https://docs.python.org/3/library/curses.html).
 
 ## Installation
 Clone the library and install:
