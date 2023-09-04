@@ -1,21 +1,11 @@
 #!/usr/bin/env python3
 import curses
-from curses import wrapper
 from curses.textpad import Textbox, rectangle
 from .baseball_live import BaseballSchedule
 from .baseball_live import BaseballLive
 import textwrap
-import time
 
 screen = curses.initscr()
-dims = screen.getmaxyx()
-bs = BaseballSchedule()
-gt = bs.games_today()
-gt_split = gt.splitlines()
-gt_split.append("")
-gt_height = len(gt_split)
-gt_length = len(max(gt_split, key=len))
-
 
 class TerminalColorException(Exception):
     """Raised when terminal colour does not support 256"""
@@ -30,7 +20,11 @@ def check_256_support():
         return False
 
 
-def display_games_today(stdscr: "curses._CursesWindow"):
+def display_games_today(stdscr: "curses._CursesWindow", gt: str, dims: tuple):
+    gt_split = gt.splitlines()
+    gt_split.append("")
+    gt_height = len(gt_split)
+    gt_length = len(max(gt_split, key=len))
     stdscr.erase()
     for i, j in enumerate(gt_split):
         ht = int(dims[0] / 2) - int(gt_height / 2) + i
@@ -56,7 +50,7 @@ else:
     raise TerminalColorException("Terminal does not support 256 color")
 
 
-def pitch_book(pitch_code):
+def pitch_book(pitch_code: str):
     # Used for displaying the pitch type based on pitch_code
     if pitch_code == "FF":
         # four seam fastball
@@ -86,9 +80,14 @@ def pitch_book(pitch_code):
         return curses.color_pair(9)
 
 
-def main(stdscr: "curses._CursesWindow"):
+def live(stdscr: "curses._CursesWindow"):
+    # get games today
+    bs = BaseballSchedule()
+    gt = bs.games_today()
+    
     # display games today
-    game_id = display_games_today(stdscr)
+    dims = stdscr.getmaxyx()
+    game_id = display_games_today(stdscr, gt, dims)
 
     # convert gameid to gamePk and and get data
     gamePk = bs.id_to_gamepk(game_id)
@@ -102,7 +101,6 @@ def main(stdscr: "curses._CursesWindow"):
         return None
 
     while True:
-        screen = curses.initscr()
         dims = screen.getmaxyx()
         stdscr.erase()
 
@@ -257,5 +255,13 @@ def main(stdscr: "curses._CursesWindow"):
         except KeyboardInterrupt:
             break
 
+def main():
+    try:
+        curses.wrapper(live)
+    except KeyboardInterrupt:
+        curses.endwin()
 
-wrapper(main)
+
+if __name__ == "__main__":
+    main()
+    

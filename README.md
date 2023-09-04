@@ -1,15 +1,15 @@
 # baseball_live
-Live MLB at-bats on the terminal.
+Live MLB at-bats on the terminal using Python curses.
 
-## Dependencies
-A terminal with 256 color support  
-[MLB-StatsAPI](https://github.com/toddrob99/MLB-StatsAPI)  
-[tabulate](https://github.com/gregbanks/python-tabulate)   
-
-## Usage
-Call baseball_term.py on the terminal. 
+## Installation
+Clone the library and install:
 ```
-python3 -m baseball_live.baseball_term
+pip install -e .
+```
+## Usage
+You can call the script using `baseball_live`. 
+```
+$ baseball_live
 ```
 Which returns the baseball schedule for current day (default US-Eastern):
 ```

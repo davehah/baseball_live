@@ -100,13 +100,7 @@ class BaseballPitchData:
 
 
 class BaseballLive:
-    """Class for live baseball data.
-
-    Args:
-        gamePk (int): The gamePk for live data.
-
-    Attributes:
-        game (dict): The returned dictionary from statsapi using gamePk.
+    """Class for baseball data using MLBStats-API.
     """
 
     def __init__(self, gamePk: int):
