@@ -113,9 +113,18 @@ class GameDisplay:
         for i, pX in enumerate(pXs):
             plot_y = round(boty - pZ_rels[i] * yfactor)
             plot_x = round(self.midx + (-1 * pX) * xfactor)
-            # if plot_y is bigger or smaller than screen dimensions, adjust
+            # if plot_y is bigger or smaller than screen dimensions, adjust (+ 5 is arbitrary)
             if plot_y + 5 >= self.dims[0]:
                 plot_y = self.dims[0] - 2
+            # same for plot_x
+            if plot_x + 5 >= self.dims[1]:
+                plot_x = self.dims[1] - 2
+            # plot_x and plot_y cannot be negative
+            if plot_x < 0:
+                plot_x = 0
+            if plot_y < 0:
+                plot_y = 0
+            
 
             self.stdscr.addstr(plot_y, plot_x, "X", pitch_book(pitches.pitch_type[i]))
             self.stdscr.addstr(
@@ -238,7 +247,10 @@ def live(stdscr: "curses._CursesWindow"):
         gd.current_call(bl.call)
         gd.title(bl.pitcher, bl.batter)
         if bl.atbat_result is not None:
-            gd.result(bl.atbat_result)
+            # need to do this since because some atbat_result has extra spaces
+            words = bl.atbat_result.split()
+            atbat_result = ' '.join(words)
+            gd.result(atbat_result)
         stdscr.refresh()
 
         # refresh every 5 seconds
