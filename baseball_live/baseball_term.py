@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import curses
 from curses.textpad import Textbox, rectangle
-from .baseball_live import BaseballSchedule
-from .baseball_live import BaseballLive
+from .baseball_live import BaseballSchedule, BaseballLive, BaseballPitchData
 import textwrap
+from typing import Union
 
 screen = curses.initscr()
 
@@ -68,6 +68,120 @@ def pitch_book(pitch_code: str):
     return curses.color_pair(pitch_color_mapping.get(pitch_code, 9))
 
 
+class GameDisplay:
+    def __init__(self, stdscr: "curses._CursesWindow"):
+        self.stdscr = stdscr
+        self.dims = stdscr.getmaxyx()
+        self.midx = int(self.dims[1] / 2)
+        self.midy = int(self.dims[0] / 2)
+        self.widthx = int(self.dims[1] / 6)
+        self.heighty = round(self.widthx / 1.5)
+        self.ix = int(self.dims[1] * (1 / 8))  # for plottings innings, etc.
+        self.iy = int(self.dims[0] * (1 / 4))
+
+    def strike_zone(self):
+        ulx, uly = self.midx - int(self.widthx / 2), self.midy - int(self.heighty / 2)
+        lrx, lry = self.midx + int(self.widthx / 2), self.midy + int(self.heighty / 2)
+        rectangle(self.stdscr, uly, ulx, lry, lrx)
+        self.stdscr.refresh()
+
+    def status_when_no_pitch(self, status: Union[str, None]):
+        desy = int(self.dims[0] * (6 / 7))
+        desx = int(self.dims[1] / 2) - int(len(status) / 2)
+        self.stdscr.addstr(desy, desx, status)
+        self.stdscr.refresh()
+
+    def pitches_plot(self, pitches: Union[BaseballPitchData, None]):
+        sz_top = pitches.sz_top[0]
+        sz_bottom = pitches.sz_bottom[0]
+        sz_height = sz_top - sz_bottom
+        # scale the pitch rectangle against the rectangle on screen.
+        # pX is relative to the centre of home plate
+        # pZ starts from ground
+        sz_top = pitches.sz_top[0]
+        sz_bottom = pitches.sz_bottom[0]
+        boty = self.midy + self.heighty / 2
+        sz_height = sz_top - sz_bottom
+        yfactor = self.heighty / sz_height
+        xfactor = self.widthx / (17 / 12)  # denominator is plate width in ft
+        pXs, pZs = pitches.pX, pitches.pZ
+        # set negative pZs to zero (ball touched the ground).
+        pZs = [0 if i < 0 else i for i in pZs]
+        # get relative pZs with respect to the screen
+        pZ_rels = [i - sz_bottom for i in pZs]
+
+        for i, pX in enumerate(pXs):
+            plot_y = round(boty - pZ_rels[i] * yfactor)
+            plot_x = round(self.midx + (-1 * pX) * xfactor)
+            # if plot_y is bigger or smaller than screen dimensions, adjust
+            if plot_y + 5 >= self.dims[0]:
+                plot_y = self.dims[0] - 2
+
+            self.stdscr.addstr(plot_y, plot_x, "X", pitch_book(pitches.pitch_type[i]))
+            self.stdscr.addstr(
+                plot_y + 1, plot_x - 1, str(round(pitches.pitch_speed[i]))
+            )
+
+    def pitches_legend(self, pitches: Union[BaseballPitchData, None]):
+        pitch_type_set = list(set(pitches.pitch_type))
+        legx = int(self.dims[1] * (5 / 6))
+        legy = int(self.dims[0] * (1 / 4))
+        for i, pitch in enumerate(pitch_type_set):
+            self.stdscr.addstr(legy + i, legx, "X", pitch_book(pitch))
+            self.stdscr.addstr(legy + i, legx + 1, " - " + pitch)
+
+    def current_inning(self, inning: str):
+        self.stdscr.addstr(self.iy, self.ix, f"I: {inning}")
+
+    def score(self, score: tuple):
+        aw, hm = score
+        self.stdscr.addstr(self.iy + 1, self.ix, f"R: {aw}-{hm}")
+
+    def pitch_count(self, current_count: dict):
+        if current_count is not None:
+            strikes = current_count["strikes"]
+            balls = current_count["balls"]
+            outs = current_count["outs"]
+        else:
+            strikes = 0
+            balls = 0
+            outs = 0
+        self.stdscr.addstr(self.iy + 2, self.ix, f"{balls}-{strikes} O: {outs}")
+
+    def expected_call(self, expected_call: str):
+        self.stdscr.addstr(self.iy + 3, self.ix, f"EC: {expected_call}")
+
+    def current_call(self, current_call: str):
+        self.stdscr.addstr(self.iy + 4, self.ix, current_call)
+
+    def title(self, pitcher: str, batter: str):
+        titlepitcher = f"Pitcher: {pitcher}"
+        titlebatter = f"Batter: {batter}"
+        titleypitcher = int(self.dims[0] / 7)
+        titlexpitcher = int(self.dims[1] / 2) - int(len(titlepitcher) / 2)
+        titleybatter = titleypitcher + 1
+        titlexbatter = int(self.dims[1] / 2) - int(len(titlebatter) / 2)
+        self.stdscr.addstr(titleypitcher, titlexpitcher, titlepitcher)
+        self.stdscr.addstr(titleybatter, titlexbatter, titlebatter)
+
+    def result(self, atbat_result: str):
+        resy = int(self.dims[0] * (6 / 7))
+        resx = int(self.dims[1] / 2) - int(len(atbat_result) / 2)
+        # if the string is too long, need to chop it up to display to next
+        if len(atbat_result) > self.dims[1]:
+            # wrap text
+            res = textwrap.fill(
+                atbat_result, width=self.dims[1] - int(self.dims[1] * (2 / 8))
+            )
+            atbat_result_list = res.splitlines()
+            resx = int(self.dims[1] / 2) - int(len(atbat_result_list[0]) / 2)
+            for i, ar in enumerate(atbat_result_list):
+                self.stdscr.addstr(resy + i, resx, ar)
+
+        else:
+            self.stdscr.addstr(resy, resx, atbat_result)
+
+
 def live(stdscr: "curses._CursesWindow"):
     # get games today
     bs = BaseballSchedule()
@@ -87,31 +201,17 @@ def live(stdscr: "curses._CursesWindow"):
         stdscr.addstr(0, 0, "Game has not started yet!")
         stdscr.getch()
         return None
-    elif game_state == "Final":
-        #TODO: add final boxscore
-        stdscr.erase()
-        stdscr.addstr(0, 0, "Game has ended!")
-        stdscr.getch()
-        return None
-
 
     while True:
-        dims = screen.getmaxyx()
+        dims = stdscr.getmaxyx()
         stdscr.erase()
 
         # get game data
         bl = BaseballLive(gamePk)
         pitches = bl.pitch_data
 
-        # plot strike zone
-        midx = int(dims[1] / 2)
-        midy = int(dims[0] / 2)
-        widthx = int(dims[1] / 6)
-        heighty = round(widthx / 1.5)
-        ulx, uly = midx - int(widthx / 2), midy - int(heighty / 2)
-        lrx, lry = midx + int(widthx / 2), midy + int(heighty / 2)
-        rectangle(stdscr, uly, ulx, lry, lrx)
-        stdscr.refresh()
+        gd = GameDisplay(stdscr)
+        gd.strike_zone()
 
         # turn off blinking cursor
         curses.curs_set(False)
@@ -119,133 +219,31 @@ def live(stdscr: "curses._CursesWindow"):
         # if pitch does not exist try again in 5 seconds
         if not pitches:
             try:
-                status = bl.atbat_result
-                desy = int(dims[0] * (6 / 7))
-                desx = int(dims[1] / 2) - int(len(status) / 2)
-                stdscr.addstr(desy, desx, status)
-                stdscr.refresh()
+                gd.status_when_no_pitch(bl.atbat_result)
             except (KeyError, TypeError):
                 pass
-
             try:
-                for i in range(50):
+                for _ in range(50):
                     curses.napms(100)
                 continue
             except KeyboardInterrupt:
                 break
 
-        # get top and bottom strike zone
-        sz_top = pitches.sz_top[0]
-        sz_bottom = pitches.sz_bottom[0]
-        sz_height = sz_top - sz_bottom
-        # plot pitch data if exists
-        # scale the pitch rectangle against the rectangle on screen.
-        # pX is relative to the centre of home plate
-        # pZ starts from ground
-        sz_top = pitches.sz_top[0]
-        sz_bottom = pitches.sz_bottom[0]
-        boty = midy + heighty / 2
-        sz_height = sz_top - sz_bottom
-        yfactor = heighty / sz_height
-        xfactor = widthx / (17 / 12)  # denominator is plate width in ft
-        pXs, pZs = pitches.pX, pitches.pZ
-        # set negative pZs to zero (ball touched the ground).
-        pZs = [0 if i < 0 else i for i in pZs]
-        # get relative pZs with respect to the screen
-        pZ_rels = [i - sz_bottom for i in pZs]
-
-        for i, pX in enumerate(pXs):
-            plot_y = round(boty - pZ_rels[i] * yfactor)
-            plot_x = round(midx + (-1 * pX) * xfactor)
-            # if plot_y is bigger or smaller than screen dimensions, adjust
-            if plot_y + 5 >= dims[0]:
-                plot_y = dims[0] - 2
-
-            stdscr.addstr(plot_y, plot_x, "X", pitch_book(pitches.pitch_type[i]))
-            stdscr.addstr(plot_y + 1, plot_x - 1, str(round(pitches.pitch_speed[i])))
-
-        # plot pitch legend
-        pitch_type_set = list(set(pitches.pitch_type))
-        legx = int(dims[1] * (5 / 6))
-        legy = int(dims[0] * (1 / 4))
-        for i, pitch in enumerate(pitch_type_set):
-            stdscr.addstr(legy + i, legx, "X", pitch_book(pitch))
-            stdscr.addstr(legy + i, legx + 1, " - " + pitch)
-
-        # plot current inning
-        current_inning = bl.inning
-
-        ix = int(dims[1] * (1 / 8))
-        iy = int(dims[0] * (1 / 4))
-        stdscr.addstr(iy, ix, f"I: {current_inning}")
-
-        # plot score
-        aw, hm = bl.score
-        sx = ix
-        sy = iy + 1
-        stdscr.addstr(sy, sx, f"R: {aw}-{hm}")
-
-        # plot pitch count
-        current_count = bl.count
-        if current_count is not None:
-            strikes = current_count["strikes"]
-            balls = current_count["balls"]
-            outs = current_count["outs"]
-        else:
-            strikes = 0
-            balls = 0
-            outs = 0
-
-        countx = sx
-        county = sy + 1
-        stdscr.addstr(county, countx, f"{balls}-{strikes} O: {outs}")
-
-        # plot expected call
-        ecx = countx
-        ecy = county + 1
-        stdscr.addstr(ecy, ecx, f"EC: {bl.expected_call}")
-
-        # plot current call
-        ccx = countx
-        ccy = ecy + 1
-        stdscr.addstr(ccy, ccx, bl.call)
-
-        # add title
-        pitcher = bl.pitcher
-        batter = bl.batter
-        titlepitcher = f"Pitcher: {pitcher}"
-        titlebatter = f"Batter: {batter}"
-        titleypitcher = int(dims[0] / 7)
-        titlexpitcher = int(dims[1] / 2) - int(len(titlepitcher) / 2)
-        titleybatter = titleypitcher + 1
-        titlexbatter = int(dims[1] / 2) - int(len(titlebatter) / 2)
-        stdscr.addstr(titleypitcher, titlexpitcher, titlepitcher)
-        stdscr.addstr(titleybatter, titlexbatter, titlebatter)
-
-        # add result if exists
-        atbat_result = bl.atbat_result
-        if atbat_result is not None:
-            resy = int(dims[0] * (6 / 7))
-            resx = int(dims[1] / 2) - int(len(atbat_result) / 2)
-            # if the string is too long, need to chop it up to display to next
-            if len(atbat_result) > dims[1]:
-                # wrap text
-                res = textwrap.fill(
-                    atbat_result, width=dims[1] - int(dims[1] * (2 / 8))
-                )
-                atbat_result_list = res.splitlines()
-                resx = int(dims[1] / 2) - int(len(atbat_result_list[0]) / 2)
-                for i, ar in enumerate(atbat_result_list):
-                    stdscr.addstr(resy + i, resx, ar)
-
-            else:
-                stdscr.addstr(resy, resx, atbat_result)
-
+        gd.pitches_plot(pitches)
+        gd.pitches_legend(pitches)
+        gd.current_inning(bl.inning)
+        gd.score(bl.score)
+        gd.pitch_count(bl.count)
+        gd.expected_call(bl.expected_call)
+        gd.current_call(bl.call)
+        gd.title(bl.pitcher, bl.batter)
+        if bl.atbat_result is not None:
+            gd.result(bl.atbat_result)
         stdscr.refresh()
 
         # refresh every 5 seconds
         try:
-            for i in range(50):
+            for _ in range(50):
                 curses.napms(100)
         except KeyboardInterrupt:
             break
