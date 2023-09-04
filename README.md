@@ -5,12 +5,11 @@ Live MLB at-bats on the terminal.
 A terminal with 256 color support  
 [MLB-StatsAPI](https://github.com/toddrob99/MLB-StatsAPI)  
 [tabulate](https://github.com/gregbanks/python-tabulate)   
-[arrow](https://github.com/arrow-py/arrow)
 
 ## Usage
 Call baseball_term.py on the terminal. 
 ```
-python3 -m baseball_live.baseball_term.py
+python3 -m baseball_live.baseball_term
 ```
 Which returns the baseball schedule for current day (default US-Eastern):
 ```
