@@ -244,9 +244,6 @@ def main(stdscr: 'curses._CursesWindow'):
         
         stdscr.refresh()
 
-        # sleep for 10 seconds (to try to sync with livestream)
-        time.sleep(10)
-        
         # refresh every 5 seconds
         try:
             for i in range(50):
