@@ -7,6 +7,7 @@ import textwrap
 
 screen = curses.initscr()
 
+
 class TerminalColorException(Exception):
     """Raised when terminal colour does not support 256"""
 
@@ -18,7 +19,8 @@ def check_256_support():
         return True
     else:
         return False
-    
+
+
 # check if terminal supports 256
 if check_256_support():
     curses.start_color()
@@ -47,9 +49,6 @@ def display_games_today(stdscr: "curses._CursesWindow", gt: str, dims: tuple):
     box.edit()
     game_id = box.gather()
     return game_id
-
-
-
 
 
 def pitch_book(pitch_code: str):
@@ -86,7 +85,7 @@ def live(stdscr: "curses._CursesWindow"):
     # get games today
     bs = BaseballSchedule()
     gt = bs.games_today()
-    
+
     # display games today
     dims = stdscr.getmaxyx()
     game_id = display_games_today(stdscr, gt, dims)
@@ -257,6 +256,7 @@ def live(stdscr: "curses._CursesWindow"):
         except KeyboardInterrupt:
             break
 
+
 def main():
     try:
         curses.wrapper(live)
@@ -266,4 +266,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
