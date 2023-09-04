@@ -87,6 +87,13 @@ def live(stdscr: "curses._CursesWindow"):
         stdscr.addstr(0, 0, "Game has not started yet!")
         stdscr.getch()
         return None
+    elif game_state == "Final":
+        #TODO: add final boxscore
+        stdscr.erase()
+        stdscr.addstr(0, 0, "Game has ended!")
+        stdscr.getch()
+        return None
+
 
     while True:
         dims = screen.getmaxyx()

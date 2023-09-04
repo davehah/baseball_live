@@ -31,7 +31,10 @@ class BaseballSchedule:
             table.append([i + 1, game["away_name"], game["home_name"], time])
 
         return tabulate(table, headers="firstrow")
-
+    
+    def boxscore(self, gamePk: int) -> str:
+        return statsapi.boxscore(gamePk=gamePk)
+    
     def input_to_id(self) -> str:
         """A user defined input to choose game ID from games_today."""
         gameid = input("Choose game ID:")
