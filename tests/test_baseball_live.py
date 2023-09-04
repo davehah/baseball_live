@@ -6,7 +6,7 @@ class TestBaseballLive(unittest.TestCase):
         self.game = BaseballLive(565542)
 
     def test_get_current_play(self):
-        self.assertIsInstance(self.game.get_current_play(), dict)
+        self.assertIsInstance(self.game.current_play, dict)
 
     def test_count(self):
         self.assertIsInstance(self.game.count, dict)
