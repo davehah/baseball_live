@@ -130,12 +130,51 @@ class BaseballLive:
         """The current batter."""
         batter = self.current_play["matchup"]["batter"]["fullName"]
         return batter
+    
+    @property
+    def batter_id(self) -> int:
+        """The current batter."""
+        batter_id = self.current_play["matchup"]["batter"]["id"]
+        return batter_id
+    
+    def get_stats(self, id: int) -> dict:
+        """The current batter's stats."""
+        stats = statsapi.player_stat_data(id)
+        return stats 
+    
+    def batter_slash(self) -> Tuple[float, float, float]:
+        """The current batter's slash line (AVG/OBP/OPS)."""
+        batter_stats_list = self.get_stats(self.batter_id)['stats']
+        for stat in batter_stats_list:
+            if stat['group'] == 'hitting':
+                hitting_stats = stat['stats']
+        avg = hitting_stats['avg']
+        obp = hitting_stats['obp']
+        ops = hitting_stats['ops']
+        return (avg, obp, ops)
 
     @property
     def pitcher(self) -> str:
         """The current pitcher."""
         pitcher = self.current_play["matchup"]["pitcher"]["fullName"]
         return pitcher
+    
+    @property
+    def pitcher_id(self) -> int:
+        """The current pitcher."""
+        pitcher_id = self.current_play["matchup"]["pitcher"]["id"]
+        return pitcher_id
+    
+    def pitcher_slash(self) -> Tuple[float, float, float]:
+        """The current pitcher's slash line (ERA/WHIP/K:BB)"""
+        pitcher_stats_list = self.get_stats(self.pitcher_id)['stats']
+        for stat in pitcher_stats_list:
+            if stat['group'] == 'pitching':
+                pitching_stats = stat['stats']
+        era = pitching_stats['era']
+        whip = pitching_stats['whip']
+        kbb = pitching_stats['strikeoutWalkRatio']
+        return (era, whip, kbb)
 
     @property
     def pitch(self) -> Union[dict, None]:
