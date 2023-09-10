@@ -4,7 +4,8 @@ import statsapi
 import arrow
 from tabulate import tabulate
 from dataclasses import dataclass
-from typing import Union, Tuple
+from typing import Union, Tuple, Dict
+from abc import ABC, abstractmethod
 
 
 class BaseballSchedule:
@@ -137,22 +138,6 @@ class BaseballLive:
         batter_id = self.current_play["matchup"]["batter"]["id"]
         return batter_id
     
-    def get_stats(self, id: int) -> dict:
-        """The current batter's stats."""
-        stats = statsapi.player_stat_data(id)
-        return stats 
-    
-    def batter_slash(self) -> Tuple[float, float, float]:
-        """The current batter's slash line (AVG/OBP/OPS)."""
-        batter_stats_list = self.get_stats(self.batter_id)['stats']
-        for stat in batter_stats_list:
-            if stat['group'] == 'hitting':
-                hitting_stats = stat['stats']
-        avg = hitting_stats['avg']
-        obp = hitting_stats['obp']
-        ops = hitting_stats['ops']
-        return (avg, obp, ops)
-
     @property
     def pitcher(self) -> str:
         """The current pitcher."""
@@ -165,17 +150,6 @@ class BaseballLive:
         pitcher_id = self.current_play["matchup"]["pitcher"]["id"]
         return pitcher_id
     
-    def pitcher_slash(self) -> Tuple[float, float, float]:
-        """The current pitcher's slash line (ERA/WHIP/K:BB)"""
-        pitcher_stats_list = self.get_stats(self.pitcher_id)['stats']
-        for stat in pitcher_stats_list:
-            if stat['group'] == 'pitching':
-                pitching_stats = stat['stats']
-        era = pitching_stats['era']
-        whip = pitching_stats['whip']
-        kbb = pitching_stats['strikeoutWalkRatio']
-        return (era, whip, kbb)
-
     @property
     def pitch(self) -> Union[dict, None]:
         """Most recent pitch metrics."""
@@ -317,14 +291,67 @@ class BaseballLive:
         return away, home
 
 
-class BaseballHighlights:
-    """Class for baseball highlights (finished games).
+class BaseballStats(ABC):
+    def __init__(self, player_id: int):
+        self.player_id = player_id
+        self.stats = statsapi.player_stat_data(self.player_id)
 
-    Attributes:
-        gamePk (int): The gamePk for highlights.
-        highlights (str): The return value of statsapi.game_highlights method.
-    """
+    @abstractmethod
+    def get_stats(self) -> Dict[str, Union[int,float]]:
+        pass
 
-    def __init__(self, gamePk):
-        self.gamePk = gamePk
-        self.highlights = statsapi.game_highlights(gamePk)
+    def stats_table(self) -> str:
+        stats:dict = self.get_stats()
+        table = list(stats.values())
+        table_headers = list(stats.keys())
+        return tabulate([table], headers=table_headers, tablefmt='simple')
+
+
+class BatterStats(BaseballStats):
+
+    def __init__(self, player_id: int):
+        super().__init__(player_id)
+
+    def get_stats(self) -> Dict[str, Union[int,float]]:
+        """The current batter's slash line (AVG/OBP/OPS)."""
+        batter_stats_list = self.stats['stats']
+        for stat in batter_stats_list:
+            if stat['group'] == 'hitting':
+                hitting_stats = stat['stats']
+        s = {}
+        # s['G'] = hitting_stats['gamesPlayed']
+        # s['PA'] = hitting_stats['plateAppearances']
+        # s['AB'] = hitting_stats['atBats']
+        # s['R'] = hitting_stats['runs']
+        # s['H'] = hitting_stats['hits']
+        # s['2B'] = hitting_stats['doubles']
+        # s['3B'] = hitting_stats['triples']
+        # s['HR'] = hitting_stats['homeRuns']
+        # s['RBI'] = hitting_stats['rbi']
+        # s['SB'] = hitting_stats['stolenBases']
+        # s['CS'] = hitting_stats['caughtStealing']
+        # s['BB'] = hitting_stats['baseOnBalls']
+        # s['SO'] = hitting_stats['strikeOuts']
+        s['AVG'] = float(hitting_stats['avg'])
+        s['OBP'] = float(hitting_stats['obp'])
+        s['SLG'] = float(hitting_stats['slg'])
+        s['OPS'] = float(hitting_stats['ops'])
+        return s
+
+class PitcherStats(BaseballStats):
+
+    def __init__(self, player_id: int):
+        super().__init__(player_id)  
+    
+    def get_stats(self) -> Dict[str, Union[int,float]]:
+        """The current pitcher's slash line (ERA/WHIP/K:BB)"""
+        pitcher_stats_list = self.stats['stats']
+        for stat in pitcher_stats_list:
+            if stat['group'] == 'pitching':
+                pitching_stats = stat['stats']
+        s = {}
+        s['ERA'] = pitching_stats['era']
+        s['WHIP'] = pitching_stats['whip']
+        s['KBB'] = pitching_stats['strikeoutWalkRatio']
+        s['HR9'] = pitching_stats['homeRunsPer9']
+        return s
