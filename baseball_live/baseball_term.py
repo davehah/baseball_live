@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
 import curses
 from curses.textpad import Textbox, rectangle
-from .baseball_live import BaseballSchedule, BaseballLive, BaseballPitchData
+from .baseball_live import (
+    BaseballSchedule,
+    BaseballLive,
+    BaseballPitchData,
+    BatterStats,
+    PitcherStats,
+)
 import textwrap
 from typing import Union
+import asyncio
 
 screen = curses.initscr()
+
+LIVE_MODE = "live"
+STAT_MODE = "stat"
+API_UPDATE_INTERVAL = 5  # seconds
+UI_UPDATE_INTERVAL = 0.1  # seconds
 
 
 class TerminalColorException(Exception):
@@ -124,7 +136,6 @@ class GameDisplay:
                 plot_x = 0
             if plot_y < 0:
                 plot_y = 0
-            
 
             self.stdscr.addstr(plot_y, plot_x, "X", pitch_book(pitches.pitch_type[i]))
             self.stdscr.addstr(
@@ -166,7 +177,7 @@ class GameDisplay:
     def title(self, pitcher: str, batter: str):
         titlepitcher = f"Pitcher: {pitcher}"
         titlebatter = f"Batter: {batter}"
-        titleypitcher = int(self.dims[0] / 7)
+        titleypitcher = int(self.dims[0] / 8)
         titlexpitcher = int(self.dims[1] / 2) - int(len(titlepitcher) / 2)
         titleybatter = titleypitcher + 1
         titlexbatter = int(self.dims[1] / 2) - int(len(titlebatter) / 2)
@@ -190,20 +201,72 @@ class GameDisplay:
         else:
             self.stdscr.addstr(resy, resx, atbat_result)
 
+    def batter_stats(self, batter_stats: str):
+        b_split = batter_stats.splitlines()
+        b_split.append("")
+        gt_height = len(b_split)
+        gt_length = len(max(b_split, key=len))
+        for i, j in enumerate(b_split):
+            ht = int(self.dims[0] / 1.5) - int(gt_height / 2) + i
+            ln = int(self.dims[1] / 2) - int(gt_length / 2)
+            self.stdscr.addstr(ht, ln, j)
 
-def live(stdscr: "curses._CursesWindow"):
-    # get games today
+    def pitcher_stats(self, pitcher_stats: str):
+        p_split = pitcher_stats.splitlines()
+        p_split.append("")
+        gt_height = len(p_split)
+        gt_length = len(max(p_split, key=len))
+        for i, j in enumerate(p_split):
+            ht = int(self.dims[0] / 3) - int(gt_height / 2) + i
+            ln = int(self.dims[1] / 2) - int(gt_length / 2)
+            self.stdscr.addstr(ht, ln, j)
+
+
+def display_live(gd: GameDisplay, api_data: BaseballLive):
+    pitches = api_data.pitch_data
+    gd.strike_zone()
+    curses.curs_set(False)
+    if not pitches:
+        try:
+            gd.status_when_no_pitch(api_data.atbat_result)
+        except (KeyError, TypeError):
+            pass
+    else:
+        gd.pitches_plot(pitches)
+        gd.pitches_legend(pitches)
+        gd.current_inning(api_data.inning)
+        gd.score(api_data.score)
+        gd.pitch_count(api_data.count)
+        gd.expected_call(api_data.expected_call)  # should pass pitches instead.
+        gd.current_call(api_data.call)
+        gd.title(api_data.pitcher, api_data.batter)
+        if api_data.atbat_result is not None:
+            # need to do this since because some atbat_result has extra spaces
+            words = api_data.atbat_result.split()
+            atbat_result = " ".join(words)
+            gd.result(atbat_result)
+
+
+def display_stats(gd: GameDisplay, api_data: BaseballLive):
+    try:
+        batter_stats = BatterStats(api_data.batter_id)
+        pitcher_stats = PitcherStats(api_data.pitcher_id)
+        gd.pitcher_stats(pitcher_stats.stats_table())
+        gd.batter_stats(batter_stats.stats_table())
+        gd.title(api_data.pitcher, api_data.batter)
+
+    except (KeyError, TypeError):
+        pass
+
+
+async def live(stdscr: "curses._CursesWindow"):
+    # Display games today
     bs = BaseballSchedule()
+    gd = GameDisplay(stdscr)
     gt = bs.games_today()
-
-    # display games today
     dims = stdscr.getmaxyx()
     game_id = display_games_today(stdscr, gt, dims)
-
-    # convert gameid to gamePk and and get data
     gamePk = bs.id_to_gamepk(game_id)
-
-    # check game state and prompt accordingly
     game_state = bs.check_game_state(gamePk)
     if game_state == "Preview":
         stdscr.erase()
@@ -211,59 +274,60 @@ def live(stdscr: "curses._CursesWindow"):
         stdscr.getch()
         return None
 
+    current_screen_mode = LIVE_MODE
+    api_data = BaseballLive(gamePk)
+
+    async def retrieve_api_data():
+        nonlocal api_data
+        while True:
+            try:
+                api_data = BaseballLive(gamePk)
+            except Exception as e:
+                api_data = None
+            await asyncio.sleep(API_UPDATE_INTERVAL)
+
+    api_data_task = asyncio.create_task(retrieve_api_data())
+    stdscr.erase()
+    stdscr.nodelay(1)  # this is to make getch non-blocking
+
     while True:
-        dims = stdscr.getmaxyx()
-        stdscr.erase()
-
-        # get game data
-        bl = BaseballLive(gamePk)
-        pitches = bl.pitch_data
-
-        gd = GameDisplay(stdscr)
-        gd.strike_zone()
-
-        # turn off blinking cursor
-        curses.curs_set(False)
-
-        # if pitch does not exist try again in 5 seconds
-        if not pitches:
-            try:
-                gd.status_when_no_pitch(bl.atbat_result)
-            except (KeyError, TypeError):
-                pass
-            try:
-                for _ in range(50):
-                    curses.napms(100)
-                continue
-            except KeyboardInterrupt:
-                break
-
-        gd.pitches_plot(pitches)
-        gd.pitches_legend(pitches)
-        gd.current_inning(bl.inning)
-        gd.score(bl.score)
-        gd.pitch_count(bl.count)
-        gd.expected_call(bl.expected_call)
-        gd.current_call(bl.call)
-        gd.title(bl.pitcher, bl.batter)
-        if bl.atbat_result is not None:
-            # need to do this since because some atbat_result has extra spaces
-            words = bl.atbat_result.split()
-            atbat_result = ' '.join(words)
-            gd.result(atbat_result)
         stdscr.refresh()
+        stdscr.erase()
+        if api_data:
+            api_data: BaseballLive
 
-        # refresh every 5 seconds
-        try:
-            for _ in range(50):
-                curses.napms(100)
-        except KeyboardInterrupt:
-            break
+            if current_screen_mode == LIVE_MODE:
+                display_live(gd, api_data)
+            elif current_screen_mode == STAT_MODE:
+                stdscr.erase()
+                display_stats(gd, api_data)
+
+            stdscr.refresh()
+            key = stdscr.getch()
+            if key == ord("q"):
+                break
+            elif key == ord("j"):
+                current_screen_mode = STAT_MODE
+            elif key == ord("k"):
+                current_screen_mode = LIVE_MODE
+
+        await asyncio.sleep(UI_UPDATE_INTERVAL)
+
+    api_data_task.cancel()
+
+    try:
+        await api_data_task
+    except asyncio.CancelledError:
+        pass
+
+
+def run_curses(stdscr):
+    asyncio.run(live(stdscr))
 
 
 def main():
     try:
-        curses.wrapper(live)
+        curses.wrapper(run_curses)
     except KeyboardInterrupt:
         curses.endwin()
 
