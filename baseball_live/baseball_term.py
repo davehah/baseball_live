@@ -18,8 +18,9 @@ LIVE_MODE = "live"
 STAT_MODE = "stat"
 API_UPDATE_INTERVAL = 5  # seconds
 UI_UPDATE_INTERVAL = 0.1  # seconds
-MIN_HEIGHT = 25
-MIN_LENGTH = 60
+MIN_HEIGHT = 25 # lines
+MIN_LENGTH = 60 # characters
+STATS_FULL_LENGTH = 106 # characters
 
 
 class TerminalColorException(Exception):
@@ -211,23 +212,33 @@ class GameDisplay:
         else:
             self.stdscr.addstr(resy, resx, atbat_result)
 
-    def batter_stats(self, batter_stats: str):
+    def batter_stats(self, name: str, batter_stats: str):
         b_split = batter_stats.splitlines()
         b_split.append("")
         gt_height = len(b_split)
         gt_length = len(max(b_split, key=len))
+        titlebatter = f"Batter: {name}"
+        ycoord = int(self.dims[0] / 1.5) - int(gt_height / 2)
+        titleybatter = ycoord - 2
+        titlexbatter = int(self.dims[1] / 2) - int(len(titlebatter) / 2)
+        self.stdscr.addstr(titleybatter, titlexbatter, titlebatter)
         for i, j in enumerate(b_split):
-            ht = int(self.dims[0] / 1.5) - int(gt_height / 2) + i
+            ht = ycoord + i
             ln = int(self.dims[1] / 2) - int(gt_length / 2)
             self.stdscr.addstr(ht, ln, j)
 
-    def pitcher_stats(self, pitcher_stats: str):
+    def pitcher_stats(self, name:str, pitcher_stats: str):
         p_split = pitcher_stats.splitlines()
         p_split.append("")
         gt_height = len(p_split)
         gt_length = len(max(p_split, key=len))
+        titlepitcher = f"Pitcher: {name}"
+        ycoord = int(self.dims[0] / 3) - int(gt_height / 2)
+        titleypitcher = ycoord - 2
+        titlexpitcher = int(self.dims[1] / 2) - int(len(titlepitcher) / 2)
+        self.stdscr.addstr(titleypitcher, titlexpitcher, titlepitcher)
         for i, j in enumerate(p_split):
-            ht = int(self.dims[0] / 3) - int(gt_height / 2) + i
+            ht = ycoord + i
             ln = int(self.dims[1] / 2) - int(gt_length / 2)
             self.stdscr.addstr(ht, ln, j)
 
@@ -261,9 +272,12 @@ def display_stats(gd: GameDisplay, api_data: BaseballLive):
     try:
         batter_stats = BatterStats(api_data.batter_id)
         pitcher_stats = PitcherStats(api_data.pitcher_id)
-        gd.pitcher_stats(pitcher_stats.stats_table())
-        gd.batter_stats(batter_stats.stats_table())
-        gd.title(api_data.pitcher, api_data.batter)
+        if gd.dims[1] < STATS_FULL_LENGTH:
+            gd.pitcher_stats(pitcher_stats.full_name(), pitcher_stats.stats_table())
+            gd.batter_stats(batter_stats.full_name(), batter_stats.stats_table())
+        else:
+            gd.pitcher_stats(pitcher_stats.full_name(),pitcher_stats.stats_table(full=True))
+            gd.batter_stats(batter_stats.full_name(),batter_stats.stats_table(full=True))
 
     except (KeyError, TypeError):
         pass

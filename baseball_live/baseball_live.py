@@ -32,10 +32,10 @@ class BaseballSchedule:
             table.append([i + 1, game["away_name"], game["home_name"], time])
 
         return tabulate(table, headers="firstrow")
-    
+
     def boxscore(self, gamePk: int) -> str:
         return statsapi.boxscore(gamePk=gamePk)
-    
+
     def input_to_id(self) -> str:
         """A user defined input to choose game ID from games_today."""
         gameid = input("Choose game ID:")
@@ -104,8 +104,7 @@ class BaseballPitchData:
 
 
 class BaseballLive:
-    """Class for baseball data using MLBStats-API.
-    """
+    """Class for baseball data using MLBStats-API."""
 
     def __init__(self, gamePk: int):
         """Initialize BaseballLive with gamePk."""
@@ -131,25 +130,25 @@ class BaseballLive:
         """The current batter."""
         batter = self.current_play["matchup"]["batter"]["fullName"]
         return batter
-    
+
     @property
     def batter_id(self) -> int:
         """The current batter."""
         batter_id = self.current_play["matchup"]["batter"]["id"]
         return batter_id
-    
+
     @property
     def pitcher(self) -> str:
         """The current pitcher."""
         pitcher = self.current_play["matchup"]["pitcher"]["fullName"]
         return pitcher
-    
+
     @property
     def pitcher_id(self) -> int:
         """The current pitcher."""
         pitcher_id = self.current_play["matchup"]["pitcher"]["id"]
         return pitcher_id
-    
+
     @property
     def pitch(self) -> Union[dict, None]:
         """Most recent pitch metrics."""
@@ -297,61 +296,78 @@ class BaseballStats(ABC):
         self.stats = statsapi.player_stat_data(self.player_id)
 
     @abstractmethod
-    def get_stats(self) -> Dict[str, Union[int,float]]:
+    def get_stats(self) -> Dict[str, Union[int, float]]:
         pass
 
-    def stats_table(self) -> str:
-        stats:dict = self.get_stats()
+    def stats_table(self, **kwargs) -> str:
+        stats: dict = self.get_stats(**kwargs)
         table = list(stats.values())
         table_headers = list(stats.keys())
-        return tabulate([table], headers=table_headers, tablefmt='simple')
+        return tabulate([table], headers=table_headers, tablefmt="simple")
+    
+    def full_name(self) -> str:
+        return self.stats["first_name"] + " " + self.stats["last_name"]
 
 
 class BatterStats(BaseballStats):
-
     def __init__(self, player_id: int):
         super().__init__(player_id)
 
-    def get_stats(self) -> Dict[str, Union[int,float]]:
+    def get_stats(self, full=False) -> Dict[str, Union[int, float]]:
         """The current batter's slash line (AVG/OBP/OPS)."""
-        batter_stats_list = self.stats['stats']
+        batter_stats_list = self.stats["stats"]
         for stat in batter_stats_list:
-            if stat['group'] == 'hitting':
-                hitting_stats = stat['stats']
+            if stat["group"] == "hitting":
+                hitting_stats = stat["stats"]
         s = {}
-        # s['G'] = hitting_stats['gamesPlayed']
-        # s['PA'] = hitting_stats['plateAppearances']
-        # s['AB'] = hitting_stats['atBats']
-        # s['R'] = hitting_stats['runs']
-        # s['H'] = hitting_stats['hits']
-        # s['2B'] = hitting_stats['doubles']
-        # s['3B'] = hitting_stats['triples']
-        # s['HR'] = hitting_stats['homeRuns']
-        # s['RBI'] = hitting_stats['rbi']
-        # s['SB'] = hitting_stats['stolenBases']
-        # s['CS'] = hitting_stats['caughtStealing']
-        # s['BB'] = hitting_stats['baseOnBalls']
-        # s['SO'] = hitting_stats['strikeOuts']
-        s['AVG'] = float(hitting_stats['avg'])
-        s['OBP'] = float(hitting_stats['obp'])
-        s['SLG'] = float(hitting_stats['slg'])
-        s['OPS'] = float(hitting_stats['ops'])
+        if full:
+            s['G'] = hitting_stats['gamesPlayed']
+            s['PA'] = hitting_stats['plateAppearances']
+            s['AB'] = hitting_stats['atBats']
+            s['R'] = hitting_stats['runs']
+            s['H'] = hitting_stats['hits']
+            s['2B'] = hitting_stats['doubles']
+            s['3B'] = hitting_stats['triples']
+            s['HR'] = hitting_stats['homeRuns']
+            s['RBI'] = hitting_stats['rbi']
+            s['SB'] = hitting_stats['stolenBases']
+            s['CS'] = hitting_stats['caughtStealing']
+            s['BB'] = hitting_stats['baseOnBalls']
+            s['SO'] = hitting_stats['strikeOuts']
+        s["AVG"] = float(hitting_stats["avg"])
+        s["OBP"] = float(hitting_stats["obp"])
+        s["SLG"] = float(hitting_stats["slg"])
+        s["OPS"] = float(hitting_stats["ops"])
         return s
 
-class PitcherStats(BaseballStats):
 
+class PitcherStats(BaseballStats):
     def __init__(self, player_id: int):
-        super().__init__(player_id)  
-    
-    def get_stats(self) -> Dict[str, Union[int,float]]:
+        super().__init__(player_id)
+
+    def get_stats(self, full=False) -> Dict[str, Union[int, float]]:
         """The current pitcher's slash line (ERA/WHIP/K:BB)"""
-        pitcher_stats_list = self.stats['stats']
+        pitcher_stats_list = self.stats["stats"]
         for stat in pitcher_stats_list:
-            if stat['group'] == 'pitching':
-                pitching_stats = stat['stats']
+            if stat["group"] == "pitching":
+                pitching_stats = stat["stats"]
         s = {}
-        s['ERA'] = pitching_stats['era']
-        s['WHIP'] = pitching_stats['whip']
-        s['KBB'] = pitching_stats['strikeoutWalkRatio']
-        s['HR9'] = pitching_stats['homeRunsPer9']
+        if full:
+            s['W'] = pitching_stats['wins']
+            s['L'] = pitching_stats['losses']
+            s['G'] = pitching_stats['gamesPlayed']
+            s['SV'] = pitching_stats['saves']
+            s['IP'] = pitching_stats['inningsPitched']
+            s['H'] = pitching_stats['hits']
+            s['R'] = pitching_stats['runs']
+            s['ER'] = pitching_stats['earnedRuns']
+            s['HR'] = pitching_stats['homeRuns']
+            s['BB'] = pitching_stats['baseOnBalls']
+            s['SO'] = pitching_stats['strikeOuts']
+            s['SO9'] = pitching_stats['strikeoutsPer9Inn']
+            s['HBP'] = pitching_stats['hitBatsmen']
+        s["ERA"] = pitching_stats["era"]
+        s["WHIP"] = pitching_stats["whip"]
+        s["KBB"] = pitching_stats["strikeoutWalkRatio"]
+        s["HR9"] = pitching_stats["homeRunsPer9"]
         return s
