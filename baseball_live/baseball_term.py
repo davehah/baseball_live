@@ -27,23 +27,14 @@ class TerminalColorException(Exception):
     """Raised when terminal colour does not support 256"""
 
 
-def check_256_support():
+def check_color_support():
     curses.setupterm()
-    nums = curses.tigetnum("colors")
+    curses.start_color()
+    nums = curses.COLOR_PAIRS
     if nums >= 256:
         return True
     else:
         return False
-
-
-# check if terminal supports 256
-if check_256_support():
-    curses.start_color()
-    curses.use_default_colors()
-    for i in range(0, curses.COLORS):
-        curses.init_pair(i + 1, i, -1)
-else:
-    raise TerminalColorException("Terminal does not support 256 color")
 
 
 def display_games_today(stdscr: "curses._CursesWindow", gt: str, dims: tuple):
@@ -346,6 +337,14 @@ async def live(stdscr: "curses._CursesWindow"):
 
 
 def run_curses(stdscr):
+    # Setting up color pairs
+    if check_color_support():
+        curses.start_color()
+        curses.use_default_colors()
+        for i in range(0, min(curses.COLORS, curses.COLOR_PAIRS - 1)):
+            curses.init_pair(i + 1, i, -1)
+    else:
+        raise TerminalColorException("Terminal does not support 256 color")
     asyncio.run(live(stdscr))
 
 
