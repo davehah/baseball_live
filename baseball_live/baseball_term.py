@@ -18,6 +18,8 @@ LIVE_MODE = "live"
 STAT_MODE = "stat"
 API_UPDATE_INTERVAL = 5  # seconds
 UI_UPDATE_INTERVAL = 0.1  # seconds
+MIN_HEIGHT = 25
+MIN_LENGTH = 60
 
 
 class TerminalColorException(Exception):
@@ -84,6 +86,14 @@ class GameDisplay:
     def __init__(self, stdscr: "curses._CursesWindow"):
         self.stdscr = stdscr
         self.dims = stdscr.getmaxyx()
+        if self.dims[0] < MIN_HEIGHT:
+            raise Exception(
+                f"Terminal height must be at least {MIN_HEIGHT} lines tall."
+            )
+        if self.dims[1] < MIN_LENGTH:
+            raise Exception(
+                f"Terminal length must be at least {MIN_LENGTH} characters long."
+            )
         self.midx = int(self.dims[1] / 2)
         self.midy = int(self.dims[0] / 2)
         self.widthx = int(self.dims[1] / 6)
@@ -132,9 +142,9 @@ class GameDisplay:
             if plot_x + 5 >= self.dims[1]:
                 plot_x = self.dims[1] - 2
             # plot_x and plot_y cannot be negative
-            if plot_x < 0:
+            if plot_x <= 0:
                 plot_x = 0
-            if plot_y < 0:
+            if plot_y <= 0:
                 plot_y = 0
 
             self.stdscr.addstr(plot_y, plot_x, "X", pitch_book(pitches.pitch_type[i]))
@@ -262,7 +272,6 @@ def display_stats(gd: GameDisplay, api_data: BaseballLive):
 async def live(stdscr: "curses._CursesWindow"):
     # Display games today
     bs = BaseballSchedule()
-    gd = GameDisplay(stdscr)
     gt = bs.games_today()
     dims = stdscr.getmaxyx()
     game_id = display_games_today(stdscr, gt, dims)
@@ -293,6 +302,7 @@ async def live(stdscr: "curses._CursesWindow"):
     while True:
         stdscr.refresh()
         stdscr.erase()
+        gd = GameDisplay(stdscr)
         if api_data:
             api_data: BaseballLive
 
