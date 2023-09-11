@@ -18,9 +18,9 @@ LIVE_MODE = "live"
 STAT_MODE = "stat"
 API_UPDATE_INTERVAL = 5  # seconds
 UI_UPDATE_INTERVAL = 0.1  # seconds
-MIN_HEIGHT = 25 # lines
-MIN_LENGTH = 60 # characters
-STATS_FULL_LENGTH = 106 # characters
+MIN_HEIGHT = 25  # lines
+MIN_LENGTH = 60  # characters
+STATS_FULL_LENGTH = 106  # characters
 
 
 class TerminalColorException(Exception):
@@ -218,7 +218,7 @@ class GameDisplay:
             ln = int(self.dims[1] / 2) - int(gt_length / 2)
             self.stdscr.addstr(ht, ln, j)
 
-    def pitcher_stats(self, name:str, pitcher_stats: str):
+    def pitcher_stats(self, name: str, pitcher_stats: str):
         p_split = pitcher_stats.splitlines()
         p_split.append("")
         gt_height = len(p_split)
@@ -264,11 +264,13 @@ def display_stats(gd: GameDisplay, api_data: BaseballLive):
         batter_stats = BatterStats(api_data.batter_id)
         pitcher_stats = PitcherStats(api_data.pitcher_id)
         if gd.dims[1] < STATS_FULL_LENGTH:
-            gd.pitcher_stats(pitcher_stats.full_name(), pitcher_stats.stats_table())
-            gd.batter_stats(batter_stats.full_name(), batter_stats.stats_table())
+            full = False
         else:
-            gd.pitcher_stats(pitcher_stats.full_name(),pitcher_stats.stats_table(full=True))
-            gd.batter_stats(batter_stats.full_name(),batter_stats.stats_table(full=True))
+            full = True
+        gd.pitcher_stats(
+            pitcher_stats.full_name(), pitcher_stats.stats_table(full=full)
+        )
+        gd.batter_stats(batter_stats.full_name(), batter_stats.stats_table(full=full))
 
     except (KeyError, TypeError):
         pass

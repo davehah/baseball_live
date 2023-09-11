@@ -184,7 +184,7 @@ class BaseballLive:
             if "pitchData" in pitch:
                 pitch_exists = True
 
-        if pitch_exists is False:
+        if not pitch_exists:
             return None
 
         pitch_speed = []
@@ -304,7 +304,7 @@ class BaseballStats(ABC):
         table = list(stats.values())
         table_headers = list(stats.keys())
         return tabulate([table], headers=table_headers, tablefmt="simple")
-    
+
     def full_name(self) -> str:
         return self.stats["first_name"] + " " + self.stats["last_name"]
 
@@ -321,19 +321,19 @@ class BatterStats(BaseballStats):
                 hitting_stats = stat["stats"]
         s = {}
         if full:
-            s['G'] = hitting_stats['gamesPlayed']
-            s['PA'] = hitting_stats['plateAppearances']
-            s['AB'] = hitting_stats['atBats']
-            s['R'] = hitting_stats['runs']
-            s['H'] = hitting_stats['hits']
-            s['2B'] = hitting_stats['doubles']
-            s['3B'] = hitting_stats['triples']
-            s['HR'] = hitting_stats['homeRuns']
-            s['RBI'] = hitting_stats['rbi']
-            s['SB'] = hitting_stats['stolenBases']
-            s['CS'] = hitting_stats['caughtStealing']
-            s['BB'] = hitting_stats['baseOnBalls']
-            s['SO'] = hitting_stats['strikeOuts']
+            s["G"] = hitting_stats["gamesPlayed"]
+            s["PA"] = hitting_stats["plateAppearances"]
+            s["AB"] = hitting_stats["atBats"]
+            s["R"] = hitting_stats["runs"]
+            s["H"] = hitting_stats["hits"]
+            s["2B"] = hitting_stats["doubles"]
+            s["3B"] = hitting_stats["triples"]
+            s["HR"] = hitting_stats["homeRuns"]
+            s["RBI"] = hitting_stats["rbi"]
+            s["SB"] = hitting_stats["stolenBases"]
+            s["CS"] = hitting_stats["caughtStealing"]
+            s["BB"] = hitting_stats["baseOnBalls"]
+            s["SO"] = hitting_stats["strikeOuts"]
         s["AVG"] = float(hitting_stats["avg"])
         s["OBP"] = float(hitting_stats["obp"])
         s["SLG"] = float(hitting_stats["slg"])
@@ -353,19 +353,19 @@ class PitcherStats(BaseballStats):
                 pitching_stats = stat["stats"]
         s = {}
         if full:
-            s['W'] = pitching_stats['wins']
-            s['L'] = pitching_stats['losses']
-            s['G'] = pitching_stats['gamesPlayed']
-            s['SV'] = pitching_stats['saves']
-            s['IP'] = pitching_stats['inningsPitched']
-            s['H'] = pitching_stats['hits']
-            s['R'] = pitching_stats['runs']
-            s['ER'] = pitching_stats['earnedRuns']
-            s['HR'] = pitching_stats['homeRuns']
-            s['BB'] = pitching_stats['baseOnBalls']
-            s['SO'] = pitching_stats['strikeOuts']
-            s['SO9'] = pitching_stats['strikeoutsPer9Inn']
-            s['HBP'] = pitching_stats['hitBatsmen']
+            s["W"] = pitching_stats["wins"]
+            s["L"] = pitching_stats["losses"]
+            s["G"] = pitching_stats["gamesPlayed"]
+            s["SV"] = pitching_stats["saves"]
+            s["IP"] = pitching_stats["inningsPitched"]
+            s["H"] = pitching_stats["hits"]
+            s["R"] = pitching_stats["runs"]
+            s["ER"] = pitching_stats["earnedRuns"]
+            s["HR"] = pitching_stats["homeRuns"]
+            s["BB"] = pitching_stats["baseOnBalls"]
+            s["SO"] = pitching_stats["strikeOuts"]
+            s["SO9"] = pitching_stats["strikeoutsPer9Inn"]
+            s["HBP"] = pitching_stats["hitBatsmen"]
         s["ERA"] = pitching_stats["era"]
         s["WHIP"] = pitching_stats["whip"]
         s["KBB"] = pitching_stats["strikeoutWalkRatio"]
