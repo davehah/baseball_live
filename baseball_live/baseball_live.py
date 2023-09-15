@@ -110,6 +110,11 @@ class BaseballLive:
         """Initialize BaseballLive with gamePk."""
         self.gamePk = gamePk
         self.game = statsapi.get("game", {"gamePk": self.gamePk})
+    
+    @property
+    def datetime(self) -> arrow.Arrow:
+        """Returns datetime of game."""
+        return arrow.get(self.game["gameData"]["datetime"]["dateTime"])
 
     @property
     def current_play(self) -> dict:
