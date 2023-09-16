@@ -232,6 +232,10 @@ class GameDisplay:
             ht = ycoord + i
             ln = int(self.dims[1] / 2) - int(gt_length / 2)
             self.stdscr.addstr(ht, ln, j)
+    
+    def delay(self, delay: int):
+        self.stdscr.addstr(0,0, f"DELAY: {delay} sec")
+        self.stdscr.refresh()
 
 
 def display_live(gd: GameDisplay, api_data: BaseballLive):
@@ -278,6 +282,7 @@ def display_stats(gd: GameDisplay, api_data: BaseballLive):
 
 async def live(stdscr: "curses._CursesWindow"):
     # Display games today
+    DELAY = 0 # seconds
     bs = BaseballSchedule()
     gt = bs.games_today()
     dims = stdscr.getmaxyx()
@@ -314,6 +319,8 @@ async def live(stdscr: "curses._CursesWindow"):
             api_data: BaseballLive
 
             if current_screen_mode == LIVE_MODE:
+                if DELAY > 0:
+                    await asyncio.sleep(DELAY)
                 display_live(gd, api_data)
             elif current_screen_mode == STAT_MODE:
                 stdscr.erase()
@@ -327,6 +334,16 @@ async def live(stdscr: "curses._CursesWindow"):
                 current_screen_mode = STAT_MODE
             elif key == ord("k"):
                 current_screen_mode = LIVE_MODE
+            elif key == ord("h"):
+                DELAY += 5
+                gd.delay(DELAY)
+                await asyncio.sleep(0.5)
+            elif key == ord("l"):
+                DELAY -= 5
+                if DELAY < 0:
+                    DELAY = 0
+                gd.delay(DELAY)
+                await asyncio.sleep(0.5)
 
         await asyncio.sleep(UI_UPDATE_INTERVAL)
 
