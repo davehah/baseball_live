@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import curses
 from curses.textpad import Textbox, rectangle
-from .baseball_live import (
+from baseball_live.baseball_live import (
     BaseballSchedule,
     BaseballLive,
     BaseballPitchData,
@@ -105,7 +105,7 @@ class GameDisplay:
         self.stdscr.addstr(desy, desx, status)
         self.stdscr.refresh()
 
-    def pitches_plot(self, pitches: Union[BaseballPitchData, None]):
+    def pitches_plot(self, pitches: BaseballPitchData):
         sz_top = pitches.sz_top[0]
         sz_bottom = pitches.sz_bottom[0]
         sz_height = sz_top - sz_bottom
@@ -144,7 +144,7 @@ class GameDisplay:
                 plot_y + 1, plot_x - 1, str(round(pitches.pitch_speed[i]))
             )
 
-    def pitches_legend(self, pitches: Union[BaseballPitchData, None]):
+    def pitches_legend(self, pitches: BaseballPitchData):
         pitch_type_set = list(set(pitches.pitch_type))
         legx = int(self.dims[1] * (5 / 6))
         legy = int(self.dims[0] * (1 / 4))
@@ -159,7 +159,7 @@ class GameDisplay:
         aw, hm = score
         self.stdscr.addstr(self.iy + 1, self.ix, f"R: {aw}-{hm}")
 
-    def pitch_count(self, current_count: dict):
+    def pitch_count(self, current_count: Union[dict, None]):
         if current_count is not None:
             strikes = current_count["strikes"]
             balls = current_count["balls"]
@@ -232,9 +232,9 @@ class GameDisplay:
             ht = ycoord + i
             ln = int(self.dims[1] / 2) - int(gt_length / 2)
             self.stdscr.addstr(ht, ln, j)
-    
+
     def delay(self, delay: int):
-        self.stdscr.addstr(0,0, f"DELAY: {delay} sec")
+        self.stdscr.addstr(0, 0, f"DELAY: {delay} sec")
         self.stdscr.refresh()
 
 
@@ -282,7 +282,7 @@ def display_stats(gd: GameDisplay, api_data: BaseballLive):
 
 async def live(stdscr: "curses._CursesWindow"):
     # Display games today
-    DELAY = 0 # seconds
+    DELAY = 0  # seconds
     bs = BaseballSchedule()
     gt = bs.games_today()
     dims = stdscr.getmaxyx()

@@ -111,7 +111,7 @@ class BaseballLive:
         self.gamePk = gamePk
         self.game = statsapi.get("game", {"gamePk": self.gamePk})
         self.datetime = arrow.now()
-    
+
     @property
     def current_play(self) -> dict:
         """Retrieves current play data from BaseballLive.game."""
